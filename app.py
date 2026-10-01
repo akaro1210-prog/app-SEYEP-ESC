@@ -1,6 +1,5 @@
 import streamlit as st
 
-# Importar todas las vistas modulares (existentes + 5 pestañas nuevas de secciones 2 a 10)
 from views import (
     tab_formato,
     tab_variables,
@@ -16,11 +15,40 @@ from views import (
     tab_compilacion
 )
 
-st.set_page_config(
-    page_title="Generador de Informes SEYEP",
-    page_icon="⚡",
-    layout="wide"
+# --- Integración: Exportar/Importar JSON y CSV con Vista Previa ---
+from views.tab_importar_exportar import (
+    render_import_export_section,
+    export_session_to_json,
+    export_session_to_csv,
 )
+
+
+# --- Controles de Exportación e Importación con Vista Previa en Barra Lateral ---
+with st.sidebar:
+    st.divider()
+    st.subheader("💾 Exportar / Importar Datos")
+    _c_json, _c_csv = st.columns(2)
+    with _c_json:
+        st.download_button(
+            "⬇️ JSON",
+            data=export_session_to_json().encode("utf-8"),
+            file_name="informe_SEYEP_ESC.json",
+            mime="application/json",
+            use_container_width=True,
+            key="sb_export_json",
+        )
+    with _c_csv:
+        st.download_button(
+            "⬇️ CSV",
+            data=export_session_to_csv().encode("utf-8-sig"),
+            file_name="informe_SEYEP_ESC.csv",
+            mime="text/csv",
+            use_container_width=True,
+            key="sb_export_csv",
+        )
+    with st.expander("📂 Importar JSON/CSV con Vista Previa", expanded=False):
+        render_import_export_section(location_key="sidebar_auto")
+
 
 st.title("⚡ Generador de Informes de Conexión — SEYEP S.A.S.")
 st.write("Control centralizado de comandos LaTeX, recursos estéticos, tablas y secciones completas del estudio de conexión.")
@@ -108,3 +136,9 @@ with t_compilacion:
         df_supuestos_upme=df_supuestos_upme,
         archivo_or_path=archivo_or_path
     )
+
+
+# --- Sección Principal de Exportación/Importación con Vista Previa ---
+st.divider()
+with st.expander("📦 Gestión de Datos del Informe: Exportar e Importar (JSON / CSV) con Vista Previa", expanded=False):
+    render_import_export_section(location_key="main_bottom")
