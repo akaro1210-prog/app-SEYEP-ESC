@@ -1,4 +1,5 @@
 import streamlit as st
+from secciones_manager import render_control_seccion, render_boton_agregar_seccion
 
 def guardar_archivo_subido(uploaded_file, nombre_destino):
     if uploaded_file is not None:
@@ -10,6 +11,9 @@ def guardar_archivo_subido(uploaded_file, nombre_destino):
 def render():
     st.subheader("📊 Secciones 4, 5 y 6: Información de Entrada, Metodología y Escenarios")
     st.write("Personaliza la zona de influencia, curvas de demanda vs generación, normativa aplicable y escenarios de análisis.")
+
+    # Control de Sección 4 (Opcional)
+    render_control_seccion("sec_4", "Sección 4: Información de Entrada y Supuestos de Salida")
 
     st.markdown("### 4.1 Modelo de la zona de influencia")
     default_sec4_1 = r"En la \cref{fig:Unifilar} se presenta el diagrama unifilar del circuito \CTO\ suministrado por el OR."
@@ -71,14 +75,28 @@ def render():
         if guardar_archivo_subido(up_cygen_png, "consumoygeneracion.png"):
             st.success("✅ consumoygeneracion.png guardado.")
 
+    # Botón para agregar secciones adicionales en Sección 4
+    render_boton_agregar_seccion("sec_4", "Sección 4 (Información de Entrada)")
+
     st.markdown("---")
-    st.markdown("### 5. Metodología y 6. Descripción de los escenarios de análisis")
+    # Control de Sección 5 (Opcional)
+    render_control_seccion("sec_5", "Sección 5: Metodología de Análisis")
+
+    st.markdown("### 5. Metodología de Análisis")
     default_sec5_intro = (
         r"Para el desarrollo del presente informe se emplea la información suministrada por \OR, esta base de datos contiene el sistema "
         r"de distribución local desde el nodo de conexión de la S/E \SSEE, en un circuito radial de \NT. Los análisis se realizan para el circuito \CTO."
     )
     sec5_intro = st.text_area("Párrafo introductorio Sección 5 (Metodología):", value=default_sec5_intro, height=80)
 
+    # Botón para agregar secciones adicionales en Sección 5
+    render_boton_agregar_seccion("sec_5", "Sección 5 (Metodología)")
+
+    st.markdown("---")
+    # Control de Sección 6 (Opcional)
+    render_control_seccion("sec_6", "Sección 6: Descripción de los Escenarios de Análisis")
+
+    st.markdown("### 6. Descripción de los Escenarios de Análisis")
     default_sec6_despacho = (
         r"Para la demanda se consideró la información suminstrada por EPM y de acuerdo con el OR y el Consejo Nacional de Operación (CNO) "
         r"con los lineamientos para estudios de conexión simplificado en el marco de la resolución CREG 174 de 2021, el estudio se realizó bajo los siguientes escenarios:"
@@ -92,6 +110,9 @@ def render():
         r"por lo que la disponibilidad de capacidad de transmisión es menor."
     )
     sec6_gen_max = st.text_area("Detalle de generación máxima y demanda coincidente (Sección 6):", value=default_sec6_gen_max, height=110)
+
+    # Botón para agregar secciones adicionales en Sección 6
+    render_boton_agregar_seccion("sec_6", "Sección 6 (Escenarios de Análisis)")
 
     datos = {
         "sec4_1_texto": sec4_1_texto,
