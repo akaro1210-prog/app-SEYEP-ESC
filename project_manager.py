@@ -128,6 +128,7 @@ def exportar_proyecto_esc(params_totales):
         "widgets": st.session_state.get("esc_widgets_actuales", {}),
         "params": {k: _serializar_valor(v) for k, v in (params_totales or {}).items()},
         "secciones_activas": st.session_state.get("secciones_activas", {}),
+        "subsecciones_activas": st.session_state.get("subsecciones_activas", {}),
         "secciones_personalizadas": st.session_state.get("secciones_personalizadas", []),
         "csv_files": {},
         "imagenes_b64": {}
@@ -168,6 +169,8 @@ def importar_proyecto_esc(uploaded_json_file):
     st.session_state["esc_params_cargados"] = contenido.get("params", {})
     if "secciones_activas" in contenido:
         st.session_state["secciones_activas"] = contenido.get("secciones_activas", {})
+    if "subsecciones_activas" in contenido:
+        st.session_state["subsecciones_activas"] = contenido.get("subsecciones_activas", {})
     if "secciones_personalizadas" in contenido:
         st.session_state["secciones_personalizadas"] = contenido.get("secciones_personalizadas", [])
 
