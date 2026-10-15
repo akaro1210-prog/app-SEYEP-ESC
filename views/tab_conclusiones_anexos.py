@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import os
+from secciones_manager import render_control_seccion, render_boton_agregar_seccion
 
 def guardar_archivo_subido(uploaded_file, nombre_destino):
     """Guarda la imagen subida con el nombre exacto esperado por LaTeX (convirtiendo a PNG válido)."""
@@ -21,22 +22,31 @@ def estado_archivo(nombre_archivo):
 
 def render(config_vars=None):
     if config_vars is None:
-        config_vars = {}
+        config_vars = st.session_state.get("config_vars", {})
+    tipo_estudio = config_vars.get("tipo_estudio", st.session_state.get("tipo_estudio", "GD"))
+    es_autogen = ("autogenerador" in str(tipo_estudio).lower() or bool(config_vars.get("es_autogenerador", False)))
+    tag = "Autogenerador" if es_autogen else "GD"
 
     year_ini = str(config_vars.get("YearInicial", config_vars.get("year_inicial", "2027"))).strip() or "2027"
     year_fin = str(config_vars.get("YearFinal", config_vars.get("year_final", "2032"))).strip() or "2032"
 
-    st.subheader("📌 Secciones 9 y 10: Conclusiones y Anexos (Flujos de Carga)")
-    st.write("Edita las viñetas de conclusiones del estudio (`\\CONCLUSIONES`) y configura o desactiva la sección de Anexos.")
+    st.subheader(f"📌 Secciones 9 y 10: Conclusiones y Anexos ({tag})")
+    st.write(
+        f"Edita las viñetas de conclusiones del estudio (`\\CONCLUSIONES`) y configura o desactiva la sección de Anexos "
+        f"para el régimen de **{tag}**."
+    )
 
-    st.markdown("### 9. Conclusiones (`\\CONCLUSIONES`)")
+    # Control de Sección 9 (Opcional)
+    render_control_seccion("sec_9", f"Sección 9: Conclusiones ({tag})")
+
+    st.markdown(f"### 9. Conclusiones ({tag}) (`\\CONCLUSIONES`)")
     st.caption("Puedes agregar, editar o eliminar filas. Cada fila se convertirá en un `\\item` dentro de la sección de Conclusiones.")
 
     conclusiones_default = pd.DataFrame([
         {"Conclusión": r"Los equipos empleados en el proyecto (Paneles Solares, Protecciones) cumplen con la certificación de conformidad RETIE."},
-        {"Conclusión": r"Las simulaciones de flujo en estado estable con GD se evidencian tensiones que se mantienen en los valores establecidos."},
+        {"Conclusión": rf"Las simulaciones de flujo en estado estable con {tag} se evidencian tensiones que se mantienen en los valores establecidos."},
         {"Conclusión": r"Los niveles de perdidasse mantienen con la introducción del proyecto."},
-        {"Conclusión": r"Las simulaciones de cortocircuito no presentan cambios mayores al 10\% con la entrada en operación del GD en ningún punto del circuito"},
+        {"Conclusión": rf"Las simulaciones de cortocircuito no presentan cambios mayores al 10\% con la entrada en operación del {tag} en ningún punto del circuito"},
         {"Conclusión": r"Los ajustes propuestos para el proyecto coordinan correctamente con las protecciones existentes, por lo tanto no se requiere cambios de ajustes en los elementos existentes."},
         {"Conclusión": r"Los inversores cumplen con las normas de equivalencia internacionales como lo son la IEEE1547 y la UL 1741 para la integración a la red. Su nivel de distorsión armónica de corriente según ficha técnica es <3\%."},
         {"Conclusión": r"El Sistema propuesto de 900 kWac no afecta de manera significativa la red de distribución y la potencia inyectada de los excedentes será consumida por la red."}
@@ -49,7 +59,13 @@ def render(config_vars=None):
         key="editor_conclusiones"
     )
 
+    # Botón para agregar secciones adicionales en Sección 9
+    render_boton_agregar_seccion("sec_9", "Sección 9 (Conclusiones)")
+
     st.markdown("---")
+    # Control de Sección 10 (Opcional)
+    render_control_seccion("sec_10", "Sección 10: Anexos (Flujos de Carga y Gráficas)")
+
     st.markdown("### 10. Anexos: Gráficas de Perfiles y Flujos de Carga (`\\Flujosdecarga`)")
 
     # Opción principal para activar o desactivar (omitir) por completo los Anexos en el PDF
@@ -170,6 +186,9 @@ def render(config_vars=None):
                 archivos_libres_anexos = nuevos
                 st.session_state["archivos_libres_anexos"] = archivos_libres_anexos
                 st.success(f"✅ {len(archivos_libres_anexos)} imágenes listas para los Anexos.")
+
+    # Botón para agregar secciones adicionales en Sección 10
+    render_boton_agregar_seccion("sec_10", "Sección 10 (Anexos)")
 
     datos = {
         "df_conclusiones": df_conclusiones,
