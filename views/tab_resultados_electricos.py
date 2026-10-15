@@ -1,5 +1,6 @@
 import streamlit as st
 import os
+from secciones_manager import render_control_seccion, render_boton_agregar_seccion
 
 def guardar_archivo_subido(uploaded_file, nombre_destino):
     """Guarda cualquier imagen subida convirtiéndola a PNG limpio si es necesario."""
@@ -18,9 +19,18 @@ def guardar_archivo_subido(uploaded_file, nombre_destino):
 def estado_archivo(nombre_archivo):
     return "✅ En carpeta" if os.path.exists(nombre_archivo) else "⚠️ Pendiente"
 
-def render():
+def render(config_vars=None):
+    if config_vars is None:
+        config_vars = st.session_state.get("config_vars", {})
+    tipo_estudio = config_vars.get("tipo_estudio", st.session_state.get("tipo_estudio", "GD"))
+    es_autogen = ("autogenerador" in str(tipo_estudio).lower() or bool(config_vars.get("es_autogenerador", False)))
+    tag_plural = "Autogeneradores" if es_autogen else "Generadores Distribuidos (GD)"
+
     st.subheader("⚡ Sección 7: Resultados de los Análisis Eléctricos")
     st.write("Edita los textos de análisis y sube todas las imágenes de resultados y convenciones de la Sección 7.")
+
+    # Control de Sección 7 (Opcional)
+    render_control_seccion("sec_7", "Sección 7: Resultados de los Análisis Eléctricos")
 
     st.markdown("### 7.1 Flujo de carga AC en estado estable")
     default_cargabilidad_txt = (
@@ -133,7 +143,7 @@ def render():
     default_perdidas_analisis = (
         r"El análisis técnico de los escenarios proyectados para \YearInicial\ y \YearFinal\, se evidencia que el incremento más significativo "
         r"se presenta en el escenario de Hora 12, alcanzando deltas de 25,97 kW (\YearInicial) y 25,90 kW (\YearFinal); este comportamiento "
-        r"responde a la condición técnica donde los Generadores Distribuidos (GD) inyectan su máxima capacidad de energía mientras la demanda "
+        rf"responde a la condición técnica donde los {tag_plural} inyectan su máxima capacidad de energía mientras la demanda "
         r"del circuito es mínima, lo que ocasiona flujos inversos de potencia a través de la red de distribución. Por el contrario, en los escenarios "
         r"con coincidencia entre la generación y la carga, las pérdidas se mantienen en niveles bajos e impactan de manera marginal al sistema "
         r"destacando variaciones de apenas approx 11 kW en el escenario de Hora 9, lo que demuestra que la absorción local de la energía producida "
@@ -177,6 +187,9 @@ def render():
         r"de tiempos de despeje para evitar la operación en isla se presentan de manera detallada en el Estudio de Ajuste de Protecciones (EACP) entregado adjunto al presente estudio de conexión."
     )
     sec7_isla_conclusion = st.text_area("Conclusión del análisis Anti-Isla (7.6):", value=default_isla_conclusion, height=130)
+
+    # Botón para agregar secciones adicionales en Sección 7
+    render_boton_agregar_seccion("sec_7", "Sección 7 (Resultados de los Análisis Eléctricos)")
 
     datos = {
         "sec7_cargabilidad_txt": sec7_cargabilidad_txt,
