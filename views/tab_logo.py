@@ -1,47 +1,44 @@
-import os
 import streamlit as st
-from PIL import Image
+import os
 
-def render():
-    st.subheader("Logotipo del Cliente")
-    st.markdown("Sube la imagen del logotipo del cliente (formatos permitidos: **PNG, JPG, JPEG**).")
-
-    logo_filename = "Logo_Cliente.png"
-
-    # Componente para subir archivo
-    uploaded_file = st.file_uploader(
-        "Seleccionar archivo de imagen", 
-        type=["png", "jpg", "jpeg"],
-        key="logo_uploader"
-    )
-
+def guardar_archivo_subido(uploaded_file, nombre_destino):
     if uploaded_file is not None:
         try:
-            # Abrimos la imagen con PIL para verificar que sea válida y convertirla a RGB/PNG estándar
-            image = Image.open(uploaded_file)
-            
-            # Si tiene transparencia (RGBA) o paleta, la guardamos asegurando compatibilidad total
-            if image.mode in ("RGBA", "P"):
-                image = image.convert("RGBA")
-            else:
-                image = image.convert("RGB")
-                
-            # Guardamos la imagen procesada de forma limpia en disco
-            image.save(logo_filename, "PNG")
-            st.success("¡Logotipo cargado y procesado exitosamente!")
-        except Exception as e:
-            st.error(f"El archivo seleccionado no es una imagen válida o está corrupto. Error: {e}")
+            from PIL import Image
+            img = Image.open(uploaded_file)
+            img = img.convert("RGBA") if img.mode in ("RGBA", "P") else img.convert("RGB")
+            img.save(nombre_destino, "PNG")
+        except Exception:
+            with open(nombre_destino, "wb") as f:
+                f.write(uploaded_file.getbuffer())
+        return True
+    return False
 
-    # Si ya existe un logo guardado (ya sea de antes o recién subido), lo mostramos
-    if os.path.exists(logo_filename):
-        try:
-            st.markdown("---")
-            st.markdown("**Logotipo actual en uso para la portada:**")
-            # Mostramos usando la ruta en texto plano (string) para evitar el error de BytesIO
-            st.image(logo_filename, width=250)
-            return logo_filename
-        except Exception as e:
-            st.warning(f"No se pudo previsualizar la imagen actual: {e}")
-            return logo_filename
-            
-    return None
+def estado_archivo(nombre_archivo):
+    return "✅ Cargado" if os.path.exists(nombre_archivo) else "⚠️ Pendiente"
+
+def render():
+    st.subheader("🖼️ Logotipo del Cliente para Portada")
+    st.write(
+        "Sube el logotipo del cliente o promotor del proyecto. Este logo se insertará automáticamente "
+        "en la portada principal del **Estudio de Conexión Simplificado (ESC)** con escalado proporcional."
+    )
+
+    col_l1, col_l2 = st.columns([1.2, 1])
+    with col_l1:
+        st.markdown("#### Archivo: `Logo_Cliente.png`")
+        st.info(f"Estado en carpeta de trabajo: **{estado_archivo('Logo_Cliente.png')}**")
+        up_logo = st.file_uploader(
+            "Seleccionar imagen del Logo:",
+            type=["png", "jpg", "jpeg"],
+            key="up_logo_cliente_esc"
+        )
+        if guardar_archivo_subido(up_logo, "Logo_Cliente.png"):
+            st.success("✅ ¡Logo_Cliente.png guardado con éxito! Se utilizará en la compilación de la Portada.")
+
+    with col_l2:
+        st.markdown("#### Vista previa en Portada")
+        if os.path.exists("Logo_Cliente.png"):
+            st.image("Logo_Cliente.png", caption="Logo del Cliente para Portada", width=240)
+        else:
+            st.caption("Aún no se ha cargado ningún logo. Si no se sube, la portada se compilará sin bloque de logotipo.")
