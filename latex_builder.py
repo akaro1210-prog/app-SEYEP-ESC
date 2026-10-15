@@ -619,7 +619,7 @@ def generar_latex_secciones_personalizadas(sec_padre, params, es_autogen):
             raw_contenido = s.get("contenido", "")
             contenido_adaptado = adaptar_texto_regimen(raw_contenido, es_autogen)
             
-            bloque_s = f"""
+            bloque_s = rf"""
 
 {cmd_nivel}
 {contenido_adaptado}
@@ -694,6 +694,21 @@ def generar_codigo_latex(params=None):
             k_inc = f"incluir_{sec_id}"
             if k_inc not in params and sec_id in sec_activas:
                 params[k_inc] = sec_activas[sec_id]
+
+        subsec_activas = st.session_state.get("subsecciones_activas", {})
+        for sub_id in [
+            "subsec_1_1", "subsec_1_2", "subsec_1_3",
+            "subsec_2_1", "subsec_3_1", "subsec_3_2",
+            "subsec_4_1", "subsec_4_2", "subsec_4_3", "subsec_4_4",
+            "subsec_5_1", "subsec_5_2", "subsec_6_1",
+            "subsec_7_1", "subsec_7_2", "subsec_7_3", "subsec_7_4", "subsec_7_5", "subsec_7_6",
+            "subsec_8_1", "subsec_8_2", "subsec_8_3", "subsec_8_4",
+            "subsec_9_1", "subsec_10_1"
+        ]:
+            k_sub = f"incluir_{sub_id}"
+            if k_sub not in params and sub_id in subsec_activas:
+                params[k_sub] = subsec_activas[sub_id]
+
         if "secciones_personalizadas" not in params and "secciones_personalizadas" in st.session_state:
             params["secciones_personalizadas"] = st.session_state["secciones_personalizadas"]
     except Exception:
@@ -789,6 +804,10 @@ def generar_codigo_latex(params=None):
     items_ref_inv = "\n".join([f"\\item {escapar_latex(x.get('ref', ''))}" for x in inv_items])
     items_mod_inv = "\n".join([f"\\item {escapar_latex(x.get('modelo', ''))}" for x in inv_items])
     items_cant_inv = "\n".join([f"\\item {escapar_latex(x.get('cantidad', ''))}" for x in inv_items])
+    filas_inversores_tabla = "\n".join([
+        f"        {escapar_latex(x.get('modelo', ''))} & {escapar_latex(x.get('ref', ''))} & {escapar_latex(x.get('cantidad', ''))} \\\\ \\hline"
+        for x in inv_items
+    ])
 
     etiquetas_fig_inv = ["fig:fichainversoruno", "fig:fichainversordos", "fig:fichainversortres"]
     bloques_fig_inv = []
@@ -880,7 +899,7 @@ def generar_codigo_latex(params=None):
     bloque_geoespacial = ""
     if incluir_geoespacial:
         img_geo = incluir_imagen_segura("Diagrama Geoespacial.png", "width=10cm")
-        bloque_geoespacial = f"""
+        bloque_geoespacial = rf"""
 En la \\cref{{fig:georeferencia}}, se presenta el diagrama eléctrico geoespacial del circuito \\CTO\\ en el cual se conecta el proyecto.\\\\
 \\begin{{figure}}[htbp]
     \\centering
@@ -907,7 +926,7 @@ En la \\cref{{fig:georeferencia}}, se presenta el diagrama eléctrico geoespacia
     usar_equivalente_png = params.get("usar_equivalente_png", True)
     if usar_equivalente_png:
         img_eq_red = incluir_imagen_segura("equivalentered.png", "height=0.23\\textheight, keepaspectratio")
-        bloque_eq_red = f"""
+        bloque_eq_red = rf"""
 \\begin{{table}}[htbp]
     \\centering
     \\caption{{Parámetros Equivalente de RED}}
@@ -936,7 +955,7 @@ En la \\cref{{fig:georeferencia}}, se presenta el diagrama eléctrico geoespacia
         f"cargascto{year_final}.csv"
     )
 
-    bloque_informacion_or = f"""\\cref{{tab:equivalentered,tab:cargascto{year_inicial},tab:cargascto{year_final}}}
+    bloque_informacion_or = rf"""\\cref{{tab:equivalentered,tab:cargascto{year_inicial},tab:cargascto{year_final}}}
 {bloque_eq_red}
 {csv_cargas_ini}
 {csv_cargas_fin}
@@ -949,6 +968,23 @@ En la \\cref{{fig:georeferencia}}, se presenta el diagrama eléctrico geoespacia
         "sec4_2_texto",
         r"En el numeral 7.1 de la circular CREG 021 de 2022, se establece el horizonte de análisis, en la \cref{tab:horizonte} se presentan los años a analizar según la información suministrada."
     )
+    bloque_tabla_horizonte = r"""
+\begin{table}[h!]
+    \centering
+    \caption{Horizonte de análisis.}
+    \label{tab:horizonte}
+    \footnotesize
+    \setlength{\tabcolsep}{20pt}
+    \begin{tabular}{|c|c|}
+        \hline
+        \rowcolor{azulSeyep}
+        \multicolumn{2}{|c|}{\textbf{\textcolor{white}{Horizonte}}} \\ \hline
+        \YearInicial & \YearFinal \\ \hline
+    \end{tabular}
+    \setlength{\tabcolsep}{3pt}
+\end{table}
+\vspace{-10pt}
+"""
     sec4_3_texto = params.get(
         "sec4_3_texto",
         r"La energía demandada por el circuito fue suministrada por el OR en la \cref{tab:demandaenergia}, en la cual se especifica la demanda del circuito por hora."
@@ -1021,7 +1057,7 @@ En la \\cref{{fig:georeferencia}}, se presenta el diagrama eléctrico geoespacia
     img_diag_cont = incluir_imagen_segura("Diagrama_Contingencia.png", "width=15cm")
 
     if incluir_contingencia:
-        bloque_contingencia = f"""
+        bloque_contingencia = rf"""
 \\subsection{{\\textit{{Análisis de contingencia}}}}
 {contingencia_p1}\\\\
 \\leavevmode\\\\
@@ -1247,7 +1283,7 @@ En la \\cref{{tab:cargabilidadMax,tab:PUMax_conting}} se presenta los valores ma
 
     codigo_flujos_carga = "\n".join(bloques_anexos)
     if incluir_anexos and codigo_flujos_carga.strip():
-        bloque_seccion_anexos = f"""
+        bloque_seccion_anexos = rf"""
 \\clearpage
 \\section{{ANEXOS}}
 {codigo_flujos_carga}
@@ -1272,7 +1308,7 @@ En la \\cref{{tab:cargabilidadMax,tab:PUMax_conting}} se presenta los valores ma
 
     bloque_comandos_extra = "\n".join(comandos_extra)
 
-    comandos_variables = f"""
+    comandos_variables = rf"""
 % ---------- Variables del proyecto ----------
 \\providecommand{{\\mesentregainformemasyear}}{{{mes_entrega}}}
 \\providecommand{{\\nombreProyecto}}{{{nombre_proyecto}}}
@@ -1378,7 +1414,7 @@ Para el cálculo de la protección general de los inversores, se tuvieron en cue
 """
 
     
-    # --- Lectura de Secciones Activas u Opcionales ---
+    # --- Lectura de Secciones y Subsecciones Activas u Opcionales ---
     incluir_sec_1 = bool(params.get("incluir_sec_1", True))
     incluir_sec_2 = bool(params.get("incluir_sec_2", True))
     incluir_sec_3 = bool(params.get("incluir_sec_3", True))
@@ -1390,566 +1426,632 @@ Para el cálculo de la protección general de los inversores, se tuvieron en cue
     incluir_sec_9 = bool(params.get("incluir_sec_9", True))
     incluir_sec_10 = bool(params.get("incluir_sec_10", True))
 
-    bloque_intro = f"""
-\\begin{{document}}
+    incluir_subsec_1_1 = bool(params.get("incluir_subsec_1_1", True))
+    incluir_subsec_1_2 = bool(params.get("incluir_subsec_1_2", True))
+    incluir_subsec_1_3 = bool(params.get("incluir_subsec_1_3", True))
+
+    incluir_subsec_2_1 = bool(params.get("incluir_subsec_2_1", True))
+
+    incluir_subsec_3_1 = bool(params.get("incluir_subsec_3_1", True))
+    incluir_subsec_3_2 = bool(params.get("incluir_subsec_3_2", True))
+
+    incluir_subsec_4_1 = bool(params.get("incluir_subsec_4_1", True))
+    incluir_subsec_4_2 = bool(params.get("incluir_subsec_4_2", True))
+    incluir_subsec_4_3 = bool(params.get("incluir_subsec_4_3", True))
+    incluir_subsec_4_4 = bool(params.get("incluir_subsec_4_4", True))
+
+    incluir_subsec_5_1 = bool(params.get("incluir_subsec_5_1", True))
+    incluir_subsec_5_2 = bool(params.get("incluir_subsec_5_2", True))
+
+    incluir_subsec_6_1 = bool(params.get("incluir_subsec_6_1", True))
+
+    incluir_subsec_7_1 = bool(params.get("incluir_subsec_7_1", True))
+    incluir_subsec_7_2 = bool(params.get("incluir_subsec_7_2", True))
+    incluir_subsec_7_3 = bool(params.get("incluir_subsec_7_3", True))
+    incluir_subsec_7_4 = bool(params.get("incluir_subsec_7_4", True))
+    incluir_subsec_7_5 = bool(params.get("incluir_subsec_7_5", True))
+    incluir_subsec_7_6 = bool(params.get("incluir_subsec_7_6", True))
+
+    incluir_subsec_8_1 = bool(params.get("incluir_subsec_8_1", True))
+    incluir_subsec_8_2 = bool(params.get("incluir_subsec_8_2", True))
+    incluir_subsec_8_3 = bool(params.get("incluir_subsec_8_3", True))
+    incluir_subsec_8_4 = bool(params.get("incluir_subsec_8_4", True))
+
+    bloque_intro = rf"""\begin{{document}}
 
 % --- PORTADA ---
-\\begin{{titlepage}}
-    \\thispagestyle{{fancy}}
-    \\centering
-    \\vspace*{{4cm}}
-    {{\\fontsize{{20}}{{30}}\\selectfont \\textbf{{ESTUDIO DE CONEXIÓN SIMPLIFICADO {titulo_portada_regimen} SOLAR FV}}}} \\\\[0.1cm]
+\begin{{titlepage}}
+    \thispagestyle{{fancy}}
+    \centering
+    \vspace*{{4cm}}
+    {{\fontsize{{20}}{{30}}\selectfont \textbf{{ESTUDIO DE CONEXIÓN SIMPLIFICADO {titulo_portada_regimen} SOLAR FV}}}} \\[0.1cm]
 
-    {{\\fontsize{{22}}{{30}}\\selectfont \\textbf{{\\nombreProyecto{{}} - \\capacidadMW}}}} \\\\[3cm]
+    {{\fontsize{{22}}{{30}}\selectfont \textbf{{\nombreProyecto{{}} - \capacidadMW}}}} \\[3cm]
     {bloque_logo}
 
-    \\vfill
-    {{\\Large \\textbf{{Versión: 0}}}} \\\\[0.8cm]
-    {{\\Large Medellín, Colombia.}} \\\\[0.5cm]
-    {{\\Large \\mesentregainformemasyear}}\\\\[0.5cm]
-\\end{{titlepage}}
-\\newpage
+    \vfill
+    {{\Large \textbf{{Versión: 0}}}} \\[0.8cm]
+    {{\Large Medellín, Colombia.}} \\[0.5cm]
+    {{\Large \mesentregainformemasyear}}\\[0.5cm]
+\end{{titlepage}}
+\newpage
 
 % --- PÁGINA 2: CONTROL DE CAMBIOS ---
-\\thispagestyle{{fancy}}
+\thispagestyle{{fancy}}
 {bloque_tabla_cambios}
-\\newpage %
+\newpage %
 
 % --- CONFIGURACIÓN DE LA TABLA DE CONTENIDO ---
-\\renewcommand{{\\contentsname}}{{TABLA DE CONTENIDO}}
-\\tableofcontents
-\\newpage
+\renewcommand{{\contentsname}}{{TABLA DE CONTENIDO}}
+\tableofcontents
+\newpage
 
 % --- CONFIGURACIÓN DEL ÍNDICE DE TABLAS ---
-\\renewcommand{{\\listtablename}}{{ÍNDICE DE TABLAS}}
-\\begin{{center}}
-    \\listoftables
-\\end{{center}}
+\renewcommand{{\listtablename}}{{ÍNDICE DE TABLAS}}
+\begin{{center}}
+    \listoftables
+\end{{center}}
 
-\\newpage
+\newpage
 % --- CONFIGURACIÓN DEL ÍNDICE DE FIGURAS ---
-\\renewcommand{{\\listfigurename}}{{ÍNDICE DE FIGURAS}}
-\\begin{{center}}
-    \\listoffigures
-\\end{{center}}
-
+\renewcommand{{\listfigurename}}{{ÍNDICE DE FIGURAS}}
+\begin{{center}}
+    \listoffigures
+\end{{center}}
 """
-    bloque_s1 = f"""% =====================================================================
+
+    # --- SECCIÓN 1: RESUMEN EJECUTIVO Y SUBSECCIONES ---
+    subsec_1_1_tex = rf"""\subsection{{\textit{{Objetivo y alcance}}}}
+El presente documento tiene como objetivo principal analizar la viabilidad técnica del desarrollo del proyecto {nombre_regimen} {f"({sigla_proyecto}) " if not es_autogenerador else ""}solar fotovoltaico \nombreProyecto\ en la red eléctrica de distribución de \OR\ en adelante OR (Operador de Red). El siguiente estudio se enfoca en proporcionar un análisis detallado de la conexión simplificada del sistema de {nombre_regimen} a la red eléctrica existente. En tal estudio se resalta los parámetros eléctricos claves que garantizan la operación segura y eficiente del proyecto solar fotovoltaico {sigla_proyecto} \nombreProyecto\ con una potencia nominal de \capacidadMW\ , Este documento hace parte de lo establecido en el anexo 2 de la circular CREG 021 de 2022 y en el Capítulo 3 de la Resolución CREG 174 de 2021, la cual define el procedimiento de conexión para {regimen_normativo}, y considerando los lineamientos de reporte de información de la Circular CREG 021 de 2022.\\
+""" if incluir_subsec_1_1 else ""
+
+    subsec_1_2_tex = rf"""\subsection{{\textit{{Supuestos y herramienta de modelación}}}}
+La información requerida para el modelamiento del área de influencia fue suministrada por el cliente y el OR comprendiendo el diagrama unifilar con sus respectivos nodos asociados al proyecto y sus respectivas cargas con el comportamiento en potencia activa y reactiva. El modelamiento de dicho diagrama unifilar se realizó en el software Digsilent Power Factory.\\
+\\
+\leavevmode\\
+\supuestos
+{bloque_tabla_supuestos}
+""" if incluir_subsec_1_2 else ""
+
+    subsec_1_3_tex = rf"""\subsection{{\textit{{Resumen de los principales resultados}}}}
+{resumen_intro}\\
+\resumen
+{resumen_cierre}
+""" if incluir_subsec_1_3 else ""
+
+    bloque_s1 = rf"""% =====================================================================
 % SECCIÓN 1: RESUMEN EJECUTIVO
 % =====================================================================
-\\newpage
-\\section{{RESUMEN EJECUTIVO}}
-\\subsection{{\\textit{{Objetivo y alcance}}}}
-El presente documento tiene como objetivo principal analizar la viabilidad técnica del desarrollo del proyecto {nombre_regimen} {f"({sigla_proyecto}) " if not es_autogenerador else ""}solar fotovoltaico \\nombreProyecto\\ en la red eléctrica de distribución de \\OR\\ en adelante OR (Operador de Red). El siguiente estudio se enfoca en proporcionar un análisis detallado de la conexión simplificada del sistema de {nombre_regimen} a la red eléctrica existente. En tal estudio se resalta los parámetros eléctricos claves que garantizan la operación segura y eficiente del proyecto solar fotovoltaico {sigla_proyecto} \\nombreProyecto\\ con una potencia nominal de \\capacidadMW\\ , Este documento hace parte de lo establecido en el anexo 2 de la circular CREG 021 de 2022 y en el Capítulo 3 de la Resolución CREG 174 de 2021, la cual define el procedimiento de conexión para {regimen_normativo}, y considerando los lineamientos de reporte de información de la Circular CREG 021 de 2022.\\\\
-
-\\subsection{{\\textit{{Supuestos y herramienta de modelación}}}}
-La información requerida para el modelamiento del área de influencia fue suministrada por el cliente y el OR comprendiendo el diagrama unifilar con sus respectivos nodos asociados al proyecto y sus respectivas cargas con el comportamiento en potencia activa y reactiva. El modelamiento de dicho diagrama unifilar se realizó en el software Digsilent Power Factory.\\\\
-\\leavevmode\\\\
-\\supuestos
-{bloque_tabla_supuestos}
-
-\\subsection{{\\textit{{Resumen de los principales resultados}}}}
-{resumen_intro}\\\\
-\\resumen
-{resumen_cierre}
-
-""" if incluir_sec_1 else ""
+\newpage
+\section{{RESUMEN EJECUTIVO}}
+{subsec_1_1_tex}
+{subsec_1_2_tex}
+{subsec_1_3_tex}
+""" if (incluir_sec_1 and (incluir_subsec_1_1 or incluir_subsec_1_2 or incluir_subsec_1_3)) else ""
     bloque_s1 += generar_latex_secciones_personalizadas("sec_1", params, es_autogenerador)
 
-    bloque_s2 = f"""% =====================================================================
+    # --- SECCIÓN 2: DESCRIPCIÓN GENERAL DEL PROYECTO Y SUBSECCIONES ---
+    subsec_2_1_tex = rf"""\subsection{{\textit{{información del proyecto}}}}
+{sec2_intro}\\
+\begin{{table}}[h!]
+    \centering
+    \caption{{Coordenadas geográficas del Proyecto.}}
+    \label{{tab:coordenadas}}
+    \renewcommand{{\arraystretch}}{{1.8}}
+    \begin{{tabular}}{{|c|c|c|}}
+        \hline
+        \rowcolor{{azulSeyep}}
+        \textbf{{\textcolor{{white}}{{Nombre}}}} &
+        \textbf{{\textcolor{{white}}{{Latitud}}}} &
+        \textbf{{\textcolor{{white}}{{Longitud}}}} \\ \hline
+        \nombreProyecto\ & \Latitud\ & \Longitud\ \\ \hline
+    \end{{tabular}}
+\end{{table}}
+\bigskip
+\begin{{table}}[h!]
+    \centering
+    \caption{{Descripción general del Proyecto.}}
+    \label{{tab:descripcion_proyecto}}
+    \renewcommand{{\arraystretch}}{{1.8}}
+    \begin{{tabular}}{{|c|c|}}
+        \hline
+        \rowcolor{{azulSeyep}}
+        \textbf{{\textcolor{{white}}{{Item}}}} &
+        \textbf{{\textcolor{{white}}{{Especificaciones Técnicas}}}} \\ \hline
+        Capacidad del Proyecto (kWac) & \capacidadMW\ \\ \hline
+        Vida Útil & {vida_util} \\ \hline
+        Tipo de Fuente & {tipo_fuente} \\ \hline
+        Módulos & \referenciaPanel\ \\ \hline
+        Inversores & \refInversoruno\ \\ \hline
+        Transformador & 1.0 MVA (Dyn5) \\ \hline
+        Red de Distribución (OR) & \OR\ \\ \hline
+        Subestación de Conexión & \SSEE\ \\ \hline
+        Circuito & \CTO\ \\ \hline
+        Nivel de Tensión (kV) & \NT\ \\ \hline
+        Nodo de Conexión & \nodo\ \\ \hline
+    \end{{tabular}}
+\end{{table}}
+\bigskip
+\begin{{table}}[h!]
+    \centering
+    \caption{{Información de los paneles fotovoltaicos}}
+    \label{{tab:fichapanel}}
+    \renewcommand{{\arraystretch}}{{1.8}}
+    \begin{{tabular}}{{|c|c|c|}}
+        \hline
+        \rowcolor{{azulSeyep}}
+        \textbf{{\textcolor{{white}}{{Tipo de Panel}}}} &
+        \textbf{{\textcolor{{white}}{{Potencia Máxima}}}} &
+        \textbf{{\textcolor{{white}}{{Cantidad}}}} \\ \hline
+        {tipo_panel_etiqueta} & \potenciaPanel\ & \cantidadPanel\ \\ \hline
+    \end{{tabular}}
+\end{{table}}
+\bigskip
+\begin{{table}}[h!]
+    \centering
+    \caption{{Información técnica de los inversores fotovoltaicos}}
+    \label{{tab:inversores}}
+    \renewcommand{{\arraystretch}}{{1.8}}
+    \begin{{tabular}}{{|c|c|c|}}
+        \hline
+        \rowcolor{{azulSeyep}}
+        \textbf{{\textcolor{{white}}{{Modelo de Inversor}}}} &
+        \textbf{{\textcolor{{white}}{{Potencia Nominal}}}} &
+        \textbf{{\textcolor{{white}}{{Cantidad}}}} \\ \hline
+        {filas_inversores_tabla}
+    \end{{tabular}}
+\end{{table}}
+{sec2_cierre}\\
+\leavevmode\\
+{bloque_geoespacial}
+\begin{{figure}}[h!]
+    \centering
+    {img_ubicacion}
+    \caption{{Ubicación Geográfica {sigla_proyecto} \nombreProyecto\ - \capacidadMW\ , Google Earth}}
+    \label{{fig:ubicacion}}
+\end{{figure}}
+""" if incluir_subsec_2_1 else ""
+
+    bloque_s2 = rf"""% =====================================================================
 % SECCIÓN 2: DESCRIPCIÓN GENERAL DEL PROYECTO
 % =====================================================================
-\\section{{DESCRIPCIÓN GENERAL DEL PROYECTO}}
-\\subsection{{\\textit{{información del proyecto}}}}
-
-{sec2_intro}\\\\
-
-\\begin{{table}}[h!]
-    \\centering
-    \\caption{{Coordenadas geográficas del Proyecto.}}
-    \\label{{tab:coordenadas}}
-    \\renewcommand{{\\arraystretch}}{{1.8}}
-    \\begin{{tabular}}{{|c|c|c|}}
-        \\hline
-        \\rowcolor{{azulSeyep}}
-        \\textbf{{\\textcolor{{white}}{{Nombre}}}} &
-        \\textbf{{\\textcolor{{white}}{{Latitud}}}} &
-        \\textbf{{\\textcolor{{white}}{{Longitud}}}} \\\\ \\hline
-        \\nombreProyecto\\ & \\Latitud\\ & \\Longitud\\ \\\\ \\hline
-    \\end{{tabular}}
-\\end{{table}}
-\\bigskip
-
-\\begin{{table}}[h!]
-    \\centering
-    \\caption{{Descripción general del proyecto.}}
-    \\label{{tab:descripcion_proyecto}}
-    \\adjustbox{{max width=\\textwidth}}{{%
-        \\renewcommand{{\\arraystretch}}{{1.5}}
-        \\begin{{tabular}}{{|c|c|c|c|}}
-            \\hline
-            \\rowcolor{{azulSeyep}}
-            \\textbf{{\\textcolor{{white}}{{ÍTEM}}}} & \\multicolumn{{3}}{{c|}}{{\\textbf{{\\textcolor{{white}}{{DESCRIPCIÓN}}}}}} \\\\ \\hline
-            Proyecto. & \\multicolumn{{3}}{{c|}}{{{sigla_proyecto} \\nombreProyecto}} \\\\ \\hline
-            Vida Útil & \\multicolumn{{3}}{{c|}}{{{vida_util}}} \\\\ \\hline
-            Nodo y/o circuito de Conexión & \\multicolumn{{3}}{{c|}}{{\\nodo\\ / \\CTO{{}}}} \\\\ \\hline
-            Potencia. & \\multicolumn{{3}}{{c|}}{{\\capacidadMW}} \\\\ \\hline
-            Tipo Fuente de Energía & \\multicolumn{{3}}{{c|}}{{{tipo_fuente}}} \\\\ \\hline
-            \\multirow{{3}}{{*}}{{Equipos.}}
-                & {tipo_panel_etiqueta} \\potenciaPanel{{}} & \\referenciaPanel{{}} & \\cantidadPanel{{}} \\\\ \\cline{{2-4}}
-                & \\begin{{minipage}}[t]{{6.5cm}}
-                    \\refInversores
-                    \\vspace{{1pt}}
-                  \\end{{minipage}}
-                & \\begin{{minipage}}[t]{{6.5cm}}
-                    \\Inversores
-                    \\vspace{{1pt}}
-                  \\end{{minipage}}
-                & \\begin{{minipage}}[t]{{3.5cm}}
-                    \\cantidadInversores
-                    \\vspace{{1pt}}
-                  \\end{{minipage}} \\\\ \\cline{{2-4}}
-                & {prot_item} & {prot_desc} & {prot_cant} \\\\ \\hline
-        \\end{{tabular}}
-    }}
-\\end{{table}}
-
-{bloque_geoespacial}
-\\newpage
-{sec2_cierre}
-\\smallskip
-
-\\begin{{figure}}[H]
-    \\centering
-    {img_ubicacion}
-    \\caption{{Ubicación Geográfica {sigla_proyecto} \\nombreProyecto\\ - \\capacidadMW\\ , Google Earth}}
-    \\label{{fig:ubicacion}}
-\\end{{figure}}
-
-""" if incluir_sec_2 else ""
+\section{{DESCRIPCIÓN GENERAL DEL PROYECTO}}
+{subsec_2_1_tex}
+""" if (incluir_sec_2 and incluir_subsec_2_1) else ""
     bloque_s2 += generar_latex_secciones_personalizadas("sec_2", params, es_autogenerador)
 
-    bloque_s3 = f"""% =====================================================================
+    # --- SECCIÓN 3: PARÁMETROS ELÉCTRICOS DE LOS EQUIPOS Y SUBSECCIONES ---
+    subsec_3_1_tex = rf"""\subsection{{\textit{{Equipos}}}}
+{sec3_intro}\\
+\equipos
+\begin{{figure}}[h]
+    \centering
+    {img_ficha_panel}
+    \caption{{Hoja técnica del panel fotovoltaico}}
+    \label{{fig:fichapanel}}
+\end{{figure}}
+\smallskip
+{codigo_fig_inversores}
+""" if incluir_subsec_3_1 else ""
+
+    subsec_3_2_tex = rf"""\subsection{{\textit{{Información OR}}}}
+{sec3_or_texto}\\
+\leavevmode\\
+Dado lo anterior, la información suministrada se puede apreciar en las {bloque_informacion_or}
+""" if incluir_subsec_3_2 else ""
+
+    bloque_s3 = rf"""% =====================================================================
 % SECCIÓN 3: PARÁMETROS ELÉCTRICOS DE LOS EQUIPOS Y OPERACIÓN DECLARADA
 % =====================================================================
-\\newpage
-\\section{{PARÁMETROS ELÉCTRICOS DE LOS EQUIPOS Y OPERACIÓN DECLARADA}}
-\\subsection{{\\textit{{Equipos}}}}
-
-{sec3_intro}
-\\\\
-\\equipos
-
-\\begin{{figure}}[h]
-    \\centering
-    {img_ficha_panel}
-    \\caption{{Hoja técnica del panel fotovoltaico}}
-    \\label{{fig:fichapanel}}
-\\end{{figure}}
-\\smallskip
-
-{codigo_fig_inversores}
-
-\\subsection{{\\textit{{Información OR}}}}
-{sec3_or_texto}\\\\
-\\leavevmode\\\\
-Dado lo anterior, la información suministrada se puede apreciar en las {bloque_informacion_or}
-
-""" if incluir_sec_3 else ""
+\newpage
+\section{{PARÁMETROS ELÉCTRICOS DE LOS EQUIPOS Y OPERACIÓN DECLARADA}}
+{subsec_3_1_tex}
+{subsec_3_2_tex}
+""" if (incluir_sec_3 and (incluir_subsec_3_1 or incluir_subsec_3_2)) else ""
     bloque_s3 += generar_latex_secciones_personalizadas("sec_3", params, es_autogenerador)
 
-    bloque_s4 = f"""% =====================================================================
+    # --- SECCIÓN 4: INFORMACIÓN DE ENTRADA Y SUPUESTOS DE SALIDA Y SUBSECCIONES ---
+    subsec_4_1_tex = rf"""\subsection{{\textit{{Modelo de la zona de influencia}}}}
+{sec4_1_texto}
+\begin{{figure}}[h]
+    \centering
+    {img_unifilar}
+    \caption{{Diagrama unifilar del circuito \CTO, suministrado por el OR.}}
+    \label{{fig:Unifilar}}
+\end{{figure}}
+""" if incluir_subsec_4_1 else ""
+
+    subsec_4_2_tex = rf"""\subsection{{\textit{{Horizonte de análisis}}}}
+{sec4_2_texto}
+{bloque_tabla_horizonte}
+""" if incluir_subsec_4_2 else ""
+
+    subsec_4_3_tex = rf"""\subsection{{\textit{{Información de la demanda de potencia}}}}
+{sec4_3_texto}
+{csv_demanda_energia}
+""" if incluir_subsec_4_3 else ""
+
+    subsec_4_4_tex = rf"""\subsection{{\textit{{Información de energía producida Vs Energía demandada.}}}}
+{sec4_4_intro}\\
+\leavevmode\\
+\begin{{figure}}[H]
+    \centering
+    {img_curva_cto}
+    \caption{{{caption_curva_cto}}}
+    \label{{fig:curvadecarga}}
+\end{{figure}}
+{sec4_4_curva}\\
+\leavevmode\\
+{sec4_4_comp}\\
+\leavevmode\\
+\begin{{figure}}[H]
+    \centering
+    {img_consumo_gen}
+    \caption{{Curva de consumo y generación.}}
+    \label{{fig:consumoygeneracion}}
+\end{{figure}}
+""" if incluir_subsec_4_4 else ""
+
+    bloque_s4 = rf"""% =====================================================================
 % SECCIÓN 4: INFORMACIÓN DE ENTRADA Y SUPUESTOS DE SALIDA
 % =====================================================================
-\\section{{INFORMACIÓN DE ENTRADA Y SUPUESTOS DE SALIDA}}
-\\subsection{{\\textit{{Modelo de la zona de influencia}}}}
-{sec4_1_texto}
-
-\\begin{{figure}}[h]
-    \\centering
-    {img_unifilar}
-    \\caption{{Diagrama Unifilar del cto \\CTO}}
-    \\label{{fig:Unifilar}}
-\\end{{figure}}
-
-\\subsection{{\\textit{{Horizonte de análisis}}}}
-{sec4_2_texto}
-
-\\begin{{table}}[h!]
-    \\centering
-    \\caption{{Horizonte de análisis.}}
-    \\label{{tab:horizonte}}
-    \\footnotesize
-    \\setlength{{\\tabcolsep}}{{20pt}}
-    \\begin{{tabular}}{{|c|c|}}
-        \\hline
-        \\rowcolor{{azulSeyep}}
-        \\multicolumn{{2}}{{|c|}}{{\\textbf{{\\textcolor{{white}}{{Horizonte}}}}}} \\\\ \\hline
-        \\YearInicial & \\YearFinal \\\\ \\hline
-    \\end{{tabular}}
-    \\setlength{{\\tabcolsep}}{{3pt}}
-\\end{{table}}
-\\vspace{{-10pt}}
-
-\\subsection{{\\textit{{Información de la demanda de potencia}}}}
-{sec4_3_texto}
-
-{csv_demanda_energia}
-
-\\subsection{{\\textit{{Información de energía producida Vs Energía demandada.}}}}
-{sec4_4_intro}
-
-{csv_consumo_vs_gen}
-
-{sec4_4_curva}
-
-\\begin{{figure}}[H]
-    \\centering
-    {img_curva_cto}
-    \\caption{{{caption_curva_cto}}}
-    \\label{{fig:curvadecarga211}}
-\\end{{figure}}
-
-{sec4_4_comp}
-
-\\begin{{figure}}[H]
-    \\centering
-    {img_consumo_gen}
-    \\caption{{Curva de consumo y generación.}}
-    \\label{{fig:consumoygeneracion}}
-\\end{{figure}}
-
-""" if incluir_sec_4 else ""
+\section{{INFORMACIÓN DE ENTRADA Y SUPUESTOS DE SALIDA}}
+{subsec_4_1_tex}
+{subsec_4_2_tex}
+{subsec_4_3_tex}
+{subsec_4_4_tex}
+""" if (incluir_sec_4 and (incluir_subsec_4_1 or incluir_subsec_4_2 or incluir_subsec_4_3 or incluir_subsec_4_4)) else ""
     bloque_s4 += generar_latex_secciones_personalizadas("sec_4", params, es_autogenerador)
 
-    bloque_s5 = f"""% =====================================================================
+    # --- SECCIÓN 5: METODOLOGÍA Y SUBSECCIONES ---
+    subsec_5_1_tex = rf"""\subsection{{\textit{{Criterios técnicos}}}}
+Para garantizar una conexión y operación que cumpla los criterios técnicos de calidad, seguridad y confiabilidad, en el diseño, ejecución y mantenimiento del proyecto se realiza este estudio bajo las siguientes normativas colombianas.
+\begin{{itemize}}
+\item Reglamento técnico de instalaciones eléctricas (RETIE).
+\item Circular CREG 021 de 2022.
+\item Circular CREG 174 de 2021.
+\item Circular CREG 015 de 2018.
+\item Circular CREG 025 de 1995.
+\end{{itemize}}
+Teniendo en cuenta las anteriores normativas se establece algunos de los criterios y límites para tener en cuenta dentro de este documento.\\
+\\
+\begin{{itemize}}
+\item CREG 025 de 1995, “El STN se planeará de tal forma que permita, en conjunto con la generación, los sistemas de transmisión regionales y los sistemas de distribución local, Asegurar que la tensión en las barras de carga a nivel de 220 kV y superiores no sea inferior al 90\% del valor nominal, ni superior al 110\%”.
+\item Circular CREG 174 de 2021, en caso de implementar inversores en los proyectos, la capacidad del proyecto corresponde a la sumatoria de las capacidades nominales de los inversores, en el lado con conexión al SIN, la capacidad se deberá asumir con un factor de potencia unitario.
+\item Circular CREG 025 de 1995, Para las líneas de transmisión se consideran flujos aceptables, en condiciones normales de operación, cuando sean iguales o menores del 100\% de su capacidad nominal. En contingencia se admiten sobrecargas hasta el valor máximo permitido para el elemento bajo condiciones de emergencia y que se encuentra declarado por el agente propietario en el PARATEC.
+\item Para transformadores se consideran flujos aceptables en condiciones normales de operación, cuando sean iguales o menores del 100\% de su capacidad nominal. En contingencia se admiten sobrecargas hasta el valor máximo permitido para el elemento bajo condiciones de emergencia y que se encuentra declarado por el agente propietario en el PARATEC.
+\item Artículo 5 de la resolución CREG 030 de 2018, Literal a, Literal c, “La Cantidad de energía en una hora se pueden entregar los GD o AGEP que entregan energía a la red, cuyo sistema de producción de energía sea el compuesto por fotovoltaico sin capacidad de almacenamiento, conectados al mismo circuito o transformador del nivel de tensión 1, no debe superar el 50\% de promedio anual de las horas de mínima demandad diaria de energía registradas para el año anterior al de solicitud de conexión en la franja horaria comprometida entre 6 am y 6 pm.”
+\end{{itemize}}
+""" if incluir_subsec_5_1 else ""
+
+    subsec_5_2_tex = rf"""\subsection{{\textit{{Descripción de los análisis a realizar}}}}
+En el presente estudio de conexión se realizan los siguientes análisis técnicos del proyecto solar fotovoltaico de generación y consumo:\\
+A continuación, se instalan los estudios realizados:
+\begin{{itemize}}
+    \item \textbf{{Generación de energía eléctrica:}} proyección de la máxima generación del proyecto solar a la red de distribución de energía eléctrica propiedad OR.
+    \item \textbf{{Consumo de la instalación eléctrica:}} Estimado de la energía requerida por el cliente OR.
+    \item \textbf{{Estudio de flujo de carga:}} Monitorear los niveles de tensión en las barras; así como la cargabilidad en transformadores y líneas de transmisión para que no sobrepasen los límites permitidos.
+    \item \textbf{{Estudio de pérdidas:}} Analizar las pérdidas del sistema de distribución locas (SDL) con la inclusión del proyecto de generación.
+    \item \textbf{{Estudio de cortocircuito:}} Monitorear los aportes de corriente de cortocircuito en las subestaciones, así como monitorear que estas no se sobrepasen los niveles máximos de corto en las subestaciones del sistema.
+    \item \textbf{{Estudio de protecciones:}} Analizar el comportamiento de las protecciones del OR en conjunto con las del proyecto de generación para diferentes eventos en el SDL, buscando garantizar selectividad y confiabilidad.
+\end{{itemize}}
+""" if incluir_subsec_5_2 else ""
+
+    bloque_s5 = rf"""% =====================================================================
 % SECCIÓN 5: METODOLOGÍA
 % =====================================================================
-\\newpage
-\\section{{METODOLOGÍA}}
-{sec5_intro}\\\\
-
-\\subsection{{\\textit{{Criterios técnicos}}}}
-Para garantizar una conexión y operación que cumpla los criterios técnicos de calidad, seguridad y confiabilidad, en el diseño, ejecución y mantenimiento del proyecto se realiza este estudio bajo las siguientes normativas colombianas.
-\\begin{{itemize}}
-\\item Reglamento técnico de instalaciones eléctricas (RETIE).
-\\item Circular CREG 021 de 2022.
-\\item Circular CREG 174 de 2021.
-\\item Circular CREG 015 de 2018.
-\\item Circular CREG 025 de 1995.
-\\end{{itemize}}
-Teniendo en cuenta las anteriores normativas se establece algunos de los criterios y límites para tener en cuenta dentro de este documento.\\\\
-
-\\begin{{itemize}}
-\\item CREG 025 de 1995, “El STN se planeará de tal forma que permita, en conjunto con la generación, los sistemas de transmisión regionales y los sistemas de distribución local, Asegurar que la tensión en las barras de carga a nivel de 220 kV y superiores no sea inferior al 90\\% del valor nominal, ni superior al 110\\%”.
-\\item Circular CREG 174 de 2021, en caso de implementar inversores en los proyectos, la capacidad del proyecto corresponde a la sumatoria de las capacidades nominales de los inversores, en el lado con conexión al SIN, la capacidad se deberá asumir con un factor de potencia unitario.
-\\item Circular CREG 025 de 1995, Para las líneas de transmisión se consideran flujos aceptables, en condiciones normales de operación, cuando sean iguales o menores del 100\\% de su capacidad nominal. En contingencia se admiten sobrecargas hasta el valor máximo permitido para el elemento bajo condiciones de emergencia y que se encuentra declarado por el agente propietario en el PARATEC.
-\\item Para transformadores se consideran flujos aceptables en condiciones normales de operación, cuando sean iguales o menores del 100\\% de su capacidad nominal. En contingencia se admiten sobrecargas hasta el valor máximo permitido para el elemento bajo condiciones de emergencia y que se encuentra declarado por el agente propietario en el PARATEC.
-\\item Artículo 5 de la resolución CREG 030 de 2018, Literal a, Literal c, “La Cantidad de energía en una hora se pueden entregar los GD o AGEP que entregan energía a la red, cuyo sistema de producción de energía sea el compuesto por fotovoltaico sin capacidad de almacenamiento, conectados al mismo circuito o transformador del nivel de tensión 1, no debe superar el 50\\% de promedio anual de las horas de mínima demandad diaria de energía registradas para el año anterior al de solicitud de conexión en la franja horaria comprometida entre 6 am y 6 pm.”
-\\end{{itemize}}
-
-\\subsection{{\\textit{{Descripción de los análisis a realizar}}}}
-En el presente estudio de conexión se realizan los siguientes análisis técnicos del proyecto solar fotovoltaico de generación y consumo:\\\\
-A continuación, se instalan los estudios realizados:
-
-\\begin{{itemize}}
-    \\item \\textbf{{Generación de energía eléctrica:}} proyección de la máxima generación del proyecto solar a la red de distribución de energía eléctrica propiedad OR.
-    \\item \\textbf{{Consumo de la instalación eléctrica:}} Estimado de la energía requerida por el cliente OR.
-    \\item \\textbf{{Estudio de flujo de carga:}} Monitorear los niveles de tensión en las barras; así como la cargabilidad en transformadores y líneas de transmisión para que no sobrepasen los límites permitidos.
-    \\item \\textbf{{Estudio de pérdidas:}} Analizar las pérdidas del sistema de distribución locas (SDL) con la inclusión del proyecto de generación.
-    \\item \\textbf{{Estudio de cortocircuito:}} Monitorear los aportes de corriente de cortocircuito en las subestaciones, así como monitorear que estas no se sobrepasen los niveles máximos de corto en las subestaciones del sistema.
-    \\item \\textbf{{Estudio de protecciones:}} Analizar el comportamiento de las protecciones del OR en conjunto con las del proyecto de generación para diferentes eventos en el SDL, buscando garantizar selectividad y confiabilidad.
-\\end{{itemize}}
-
-""" if incluir_sec_5 else ""
+\newpage
+\section{{METODOLOGÍA}}
+{sec5_intro}\\
+{subsec_5_1_tex}
+{subsec_5_2_tex}
+""" if (incluir_sec_5 and (incluir_subsec_5_1 or incluir_subsec_5_2)) else ""
     bloque_s5 += generar_latex_secciones_personalizadas("sec_5", params, es_autogenerador)
 
-    bloque_s6 = f"""% =====================================================================
+    # --- SECCIÓN 6: ESCENARIOS DE ANÁLISIS ---
+    subsec_6_1_tex = rf"""Para clasificar cada uno de los resultados entregados en este estudio, se seleccionaron tres variables que describen cada uno de los escenarios de análisis. Estas variables son:
+\begin{{itemize}}
+  \item Año
+    \begin{{itemize}}
+        \item \textbf{{\YearInicial}}
+        \item \textbf{{\YearFinal}}
+    \end{{itemize}}
+  \item Despacho de demanda
+    \begin{{itemize}}
+        \item {sec6_despacho}
+        \begin{{itemize}}
+            \item Demanda Máxima
+            \item Demanda Media
+            \item Demanda Mínima
+        \end{{itemize}}
+    \end{{itemize}}
+  \item Generación máxima coincidente
+    \begin{{itemize}}
+        \item {sec6_gen_max}
+        \begin{{itemize}}
+            \item Con Generación
+            \item Sin Generación
+        \end{{itemize}}
+    \end{{itemize}}
+\end{{itemize}}
+""" if incluir_subsec_6_1 else ""
+
+    bloque_s6 = rf"""% =====================================================================
 % SECCIÓN 6: DESCRIPCIÓN DE LOS ESCENARIOS DE ANÁLISIS
 % =====================================================================
-\\section{{DESCRIPCIÓN DE LOS ESCENARIOS DE ANÁLISIS}}
-Para clasificar cada uno de los resultados entregados en este estudio, se seleccionaron tres variables que describen cada uno de los escenarios de análisis. Estas variables son:
-\\begin{{itemize}}
-  \\item Año
-    \\begin{{itemize}}
-        \\item \\textbf{{\\YearInicial}}
-        \\item \\textbf{{\\YearFinal}}
-    \\end{{itemize}}
-  \\item Despacho de demanda
-    \\begin{{itemize}}
-        \\item {sec6_despacho}
-        \\begin{{itemize}}
-            \\item \\textbf{{Generación máxima de la planta solar y demanda coincidente suministrada:}} {sec6_gen_max}
-        \\end{{itemize}}
-    \\end{{itemize}}
-\\end{{itemize}}
-
-""" if incluir_sec_6 else ""
+\section{{DESCRIPCIÓN DE LOS ESCENARIOS DE ANÁLISIS}}
+{subsec_6_1_tex}
+""" if (incluir_sec_6 and incluir_subsec_6_1) else ""
     bloque_s6 += generar_latex_secciones_personalizadas("sec_6", params, es_autogenerador)
 
-    bloque_s7 = f"""% =====================================================================
+    # --- SECCIÓN 7: RESULTADOS DE ANÁLISIS ELÉCTRICOS Y SUBSECCIONES ---
+    subsec_7_1_tex = rf"""\subsection{{\textit{{Flujo de carga AC en estado estable para condiciones normales de operación (Sistema Des-balanceado)}}}}
+A continuación, se presenta la leyenda que contiene todos los parámetros presentados en cada una de las cajas de resultados de la simulación, para el estudio de flujo de carga.
+\begin{{table}}[htbp]
+    \centering
+    \caption{{Convenciones de los cuadros de resultados de las simulaciones}}
+    \label{{tab:convencionesflujos}}
+    {img_conv_flujos}
+\end{{table}}
+Además, para todas las simulaciones de flujo, se cuenta con la siguiente paleta de colores, en ella se puede ver como las líneas que no cuentan con un color negro están por debajo del 100\% de cargabilidad, y las barras con un color verde, se encuentran cercanas a 1 p.u. en tensión.
+\begin{{figure}}[h]
+    \centering
+    {img_cod_colores}
+    \caption{{Código de colores en las simulaciones}}
+    \label{{fig:codigocoloresflujo}}
+\end{{figure}}
+\smallskip
+\newpage
+A continuación, se presenta el resumen de los resultados de cargabilidad y perfil de tensión de los años y escenarios de demanda y generación analizados para el circuito \CTO.
+\begin{{table}}[H]
+    \centering
+    \caption{{Flujo de Cargabilidad}}
+    \label{{tab:Cargabilidad}}
+    {img_cargabilidad}
+\end{{table}}
+{sec7_cargabilidad_txt}\\
+\leavevmode\\
+En la \cref{{tab:TensionesPU}} se muestran los resultados de los perfiles de tensión del circuito con y sin proyecto de generación.\\
+\begin{{table}}[htbp]
+    \centering
+    \caption{{Tensión de barras}}
+    \label{{tab:TensionesPU}}
+    {img_tensiones_pu}
+\end{{table}}
+\CONCLUSIONFERFILESCARGA \\
+\leavevmode\\
+Con el fin de evaluar el cambio en el perfil de tensión de los nodos de la zona de interés del proyecto {sigla_proyecto} \nombreProyecto, se presentan los valores p.u. de las tensiones del circuito la \cref{{fig:perfiltensionCTO}}
+\begin{{figure}}[h]
+    \centering
+    {img_perfil_cto}
+    \caption{{Perfil de tensión de la totalidad del circuito \CTO}}
+    \label{{fig:perfiltensionCTO}}
+\end{{figure}}
+""" if incluir_subsec_7_1 else ""
+
+    subsec_7_2_tex = rf"""\clearpage
+{bloque_contingencia}
+""" if (incluir_subsec_7_2 and incluir_contingencia and bloque_contingencia.strip()) else ""
+
+    subsec_7_3_tex = rf"""\clearpage
+\subsection{{\textit{{Cálculo de pérdidas}}}}
+Para determinar las pérdidas del sistema se realizan simulaciones de flujo de carga en los tres horarios, con y sin proyecto, con su respectivo despacho de acuerdo con la hora. Evaluando los cambios de perdida en los horizontes de tiempo.
+\begin{{table}}[htbp]
+    \centering
+    \caption{{Pérdidas SDL [kW]}}
+    \label{{tab:Perdidas}}
+    {img_perdidas}
+\end{{table}}
+{sec7_perdidas_texto}
+""" if incluir_subsec_7_3 else ""
+
+    subsec_7_4_tex = rf"""\subsection{{\textit{{Verificación del nivel de cortocircuito (Monofásico y Trifásico con la NORMA IEC60909)}}}}
+Según el sistema modelado se presentan los siguientes análisis propuestos, en base a la IEC 60909 versión 2016, la cual incorpora el aporte de corriente de cortocircuito de las tecnologías de generación basadas en inversores como la solar fotovoltaica.\\
+Se tienen las siguientes convenciones:
+\begin{{itemize}}
+    \item Skss = Potencia de cortocircuito inicial.
+    \item Ikss = Corriente de corto circuito simétrica inicial.
+    \item Ip = Corriente de corto circuito máxima instantánea.
+\end{{itemize}}
+En la \cref{{tab:convencionescortos}} se puede apreciar la leyenda de las imágenes de los estudios, la cual representa el contenido de las cajas de resultados. Tanto para un corto trifásico como para un monofásico. \\
+\begin{{table}}[H]
+    \centering
+    \caption{{Convenciones de los cuadros de resultados de las simulaciones de corto}}
+    \label{{tab:convencionescortos}}
+    {img_leyendas_cortos}
+\end{{table}}
+En la \cref{{tab:cortos}} se muestran los niveles de corto en los tres escenarios, con proyecto y sin proyecto, para los años del horizonte de análisis, en las tablas se muestran los resultados de los elementos de la zona de influencia, los resultados de todos los nodos se encuentran en el archivo de Excel anexado al estudio.
+\begin{{table}}[htbp]
+    \centering
+    \caption{{Resultados de cortocircuito}}
+    \label{{tab:cortos}}
+    {img_cortos}
+\end{{table}}
+""" if incluir_subsec_7_4 else ""
+
+    subsec_7_5_tex = rf"""\newpage
+\subsection{{\textit{{Calidad de potencia}}}}
+Declaración técnica del equipo en cuanto al cumplimiento de los parámetros establecidos en la IEEE 1547 y de estándares en cuanto a la calidad de la potencia (inyección de armónicos a la red y fluctuaciones de tensión, etc) sujetos a la verificación con medidas en campo antes y después de la instalación del proyecto.\\
+La IEEE 1547 provee especificaciones y requerimientos técnicos referente al desempeño, operación, ensayos, consideraciones de seguridad y mantenimiento de los generadores que se integran al SIN. \\
+Los siguientes inversores propuestos para el proyecto {sigla_proyecto} \nombreProyecto.
+\Inversores
+Cumplen con los estándares de las siguientes normativas que pueden ser consultadas en la ficha técnica del equipo, donde la distorsión armónica total inyectada del equipo es <3\% y cumple con su función ANTI-ISLA en caso de faltar onda de tensión del operador:
+\begin{{itemize}}
+     \item \textbf{{IEEE 1574}}
+     \item \textbf{{UL1747}}
+     \item \textbf{{Resolución CREG 024 de 2005}}
+\end{{itemize}}
+""" if incluir_subsec_7_5 else ""
+
+    subsec_7_6_tex = rf"""\subsection{{\textit{{Análisis para evitar el funcionamiento en isla}}}}
+Con base a lo estipulado en la circular 021 del 2022 del CNO, en específico en el apartado 8.5 que dice “El funcionamiento en isla de una red de distribución consiste en la posible alimentación temporal del sistema de generación a usuarios en ausencia de la red principal. Este funcionamiento debe ser evitado con el fin de mantener la seguridad de la operación y la calidad de suministro dentro los límites establecidos. En los casos donde la generación es capaz de mantener autónomamente los valores de tensión y frecuencia, existirá riesgo de funcionamiento en isla cunado cumpla la siguiente relación”
+\begin{{equation}}
+    \left( \sum_{{i=1 \text{{ a }} N}} P_{{maxgi}} \right) + P_{{gnuevo}} \geq P_{{mindem}}
+\end{{equation}}
+\newpage
+\vspace{{0.5cm}}
+\noindent \textbf{{Donde:}}
+\begin{{itemize}}
+    \item $P_{{maxgi}}$: Potencia Instalada del generador $i$.
+    \item $P_{{gnuevo}}$: Potencia Máxima del generador a estudiar.
+    \item $P_{{mindem}}$: Potencia demanda mínima.
+\end{{itemize}}
+De esta forma se presenta que:
+\begin{{equation}}
+    \label{{eq:balance_potencia}}
+    \text{{\generacionaprobada}} + \text{{\capacidadMW}} \geq \text{{\potenciaminima}}
+\end{{equation}}
+{sec7_isla_conclusion}
+""" if incluir_subsec_7_6 else ""
+
+    bloque_s7 = rf"""% =====================================================================
 % SECCIÓN 7: RESULTADOS DE LOS ANÁLISIS ELÉCTRICOS
 % =====================================================================
-\\newpage
-\\section{{RESULTADOS DE LOS ANÁLISIS ELÉCTRICOS.}}
-\\subsection{{\\textit{{Flujo de carga AC en estado estable para condiciones normales de operación (Sistema Des-balanceado)}}}}
-
-A continuación, se presenta la leyenda que contiene todos los parámetros presentados en cada una de las cajas de resultados de la simulación, para el estudio de flujo de carga.
-\\begin{{table}}[htbp]
-    \\centering
-    \\caption{{Convenciones de los cuadros de resultados de las simulaciones}}
-    \\label{{tab:convencionesflujos}}
-    {img_conv_flujos}
-\\end{{table}}
-
-Además, para todas las simulaciones de flujo, se cuenta con la siguiente paleta de colores, en ella se puede ver como las líneas que no cuentan con un color negro están por debajo del 100\\% de cargabilidad, y las barras con un color verde, se encuentran cercanas a 1 p.u. en tensión.
-
-\\begin{{figure}}[h]
-    \\centering
-    {img_cod_colores}
-    \\caption{{Código de colores en las simulaciones}}
-    \\label{{fig:codigocoloresflujo}}
-\\end{{figure}}
-\\smallskip
-
-\\newpage
-A continuación, se presenta el resumen de los resultados de cargabilidad y perfil de tensión de los años y escenarios de demanda y generación analizados para el circuito \\CTO.
-
-\\begin{{table}}[H]
-    \\centering
-    \\caption{{Flujo de Cargabilidad}}
-    \\label{{tab:Cargabilidad}}
-    {img_cargabilidad}
-\\end{{table}}
-
-{sec7_cargabilidad_txt}\\\\
-\\leavevmode\\\\
-En la \\cref{{tab:TensionesPU}} se muestran los resultados de los perfiles de tensión del circuito con y sin proyecto de generación.\\\\
-
-\\begin{{table}}[htbp]
-    \\centering
-    \\caption{{Tensión de barras}}
-    \\label{{tab:TensionesPU}}
-    {img_tensiones_pu}
-\\end{{table}}
-
-\\CONCLUSIONFERFILESCARGA \\\\
-\\leavevmode\\\\
-Con el fin de evaluar el cambio en el perfil de tensión de los nodos de la zona de interés del proyecto {sigla_proyecto} \\nombreProyecto, se presentan los valores p.u. de las tensiones del circuito la \\cref{{fig:perfiltensionCTO}}
-
-\\begin{{figure}}[h]
-    \\centering
-    {img_perfil_cto}
-    \\caption{{Perfil de tensión de la totalidad del circuito \\CTO}}
-    \\label{{fig:perfiltensionCTO}}
-\\end{{figure}}
-
-\\clearpage
-{bloque_contingencia}
-
-\\clearpage
-\\subsection{{\\textit{{Cálculo de pérdidas}}}}
-Para determinar las pérdidas del sistema se realizan simulaciones de flujo de carga en los tres horarios, con y sin proyecto, con su respectivo despacho de acuerdo con la hora. Evaluando los cambios de perdida en los horizontes de tiempo.
-
-\\begin{{table}}[htbp]
-    \\centering
-    \\caption{{Pérdidas SDL [kW]}}
-    \\label{{tab:Perdidas}}
-    {img_perdidas}
-\\end{{table}}
-
-{sec7_perdidas_texto}
-
-\\subsection{{\\textit{{Verificación del nivel de cortocircuito (Monofásico y Trifásico con la NORMA IEC60909)}}}}
-Según el sistema modelado se presentan los siguientes análisis propuestos, en base a la IEC 60909 versión 2016, la cual incorpora el aporte de corriente de cortocircuito de las tecnologías de generación basadas en inversores como la solar fotovoltaica.
-\\\\
-Se tienen las siguientes convenciones:
-\\begin{{itemize}}
-    \\item Skss = Potencia de cortocircuito inicial.
-    \\item Ikss = Corriente de corto circuito simétrica inicial.
-    \\item Ip = Corriente de corto circuito máxima instantánea.
-\\end{{itemize}}
-
-En la \\cref{{tab:convencionescortos}} se puede apreciar la leyenda de las imágenes de los estudios, la cual representa el contenido de las cajas de resultados. Tanto para un corto trifásico como para un monofásico. \\\\
-\\begin{{table}}[H]
-    \\centering
-    \\caption{{Convenciones de los cuadros de resultados de las simulaciones de corto}}
-    \\label{{tab:convencionescortos}}
-    {img_leyendas_cortos}
-\\end{{table}}
-
-En la \\cref{{tab:cortos}} se muestran los niveles de corto en los tres escenarios, con proyecto y sin proyecto, para los años del horizonte de análisis, en las tablas se muestran los resultados de los elementos de la zona de influencia, los resultados de todos los nodos se encuentran en el archivo de Excel anexado al estudio.
-
-\\begin{{table}}[htbp]
-    \\centering
-    \\caption{{Resultados de cortocircuito}}
-    \\label{{tab:cortos}}
-    {img_cortos}
-\\end{{table}}
-
-\\newpage
-\\subsection{{\\textit{{Calidad de potencia}}}}
-Declaración técnica del equipo en cuanto al cumplimiento de los parámetros establecidos en la IEEE 1547 y de estándares en cuanto a la calidad de la potencia (inyección de armónicos a la red y fluctuaciones de tensión, etc) sujetos a la verificación con medidas en campo antes y después de la instalación del proyecto.
-\\\\
-La IEEE 1547 provee especificaciones y requerimientos técnicos referente al desempeño, operación, ensayos, consideraciones de seguridad y mantenimiento de los generadores que se integran al SIN. \\\\
-
-Los siguientes inversores propuestos para el proyecto {sigla_proyecto} \\nombreProyecto.
-
-\\Inversores
-
-Cumplen con los estándares de las siguientes normativas que pueden ser consultadas en la ficha técnica del equipo, donde la distorsión armónica total inyectada del equipo es <3\\% y cumple con su función ANTI-ISLA en caso de faltar onda de tensión del operador:
-
-\\begin{{itemize}}
-     \\item \\textbf{{IEEE 1574}}
-     \\item \\textbf{{UL1747}}
-     \\item \\textbf{{Resolución CREG 024 de 2005}}
-\\end{{itemize}}
-
-\\subsection{{\\textit{{Análisis para evitar el funcionamiento en isla}}}}
-Con base a lo estipulado en la circular 021 del 2022 del CNO, en específico en el apartado 8.5 que dice “El funcionamiento en isla de una red de distribución consiste en la posible alimentación temporal del sistema de generación a usuarios en ausencia de la red principal. Este funcionamiento debe ser evitado con el fin de mantener la seguridad de la operación y la calidad de suministro dentro los límites establecidos. En los casos donde la generación es capaz de mantener autónomamente los valores de tensión y frecuencia, existirá riesgo de funcionamiento en isla cunado cumpla la siguiente relación”
-
-\\begin{{equation}}
-    \\left( \\sum_{{i=1 \\text{{ a }} N}} P_{{maxgi}} \\right) + P_{{gnuevo}} \\geq P_{{mindem}}
-\\end{{equation}}
-
-\\newpage
-\\vspace{{0.5cm}}
-\\noindent \\textbf{{Donde:}}
-\\begin{{itemize}}
-    \\item $P_{{maxgi}}$: Potencia Instalada del generador $i$.
-    \\item $P_{{gnuevo}}$: Potencia Máxima del generador a estudiar.
-    \\item $P_{{mindem}}$: Potencia demanda mínima.
-\\end{{itemize}}
-De esta forma se presenta que:
-
-\\begin{{equation}}
-    \\label{{eq:balance_potencia}}
-    \\text{{\\generacionaprobada}} + \\text{{\\capacidadMW}} \\geq \\text{{\\potenciaminima}}
-\\end{{equation}}
-
-{sec7_isla_conclusion}
-
-""" if incluir_sec_7 else ""
+\newpage
+\section{{RESULTADOS DE LOS ANÁLISIS ELÉCTRICOS.}}
+{subsec_7_1_tex}
+{subsec_7_2_tex}
+{subsec_7_3_tex}
+{subsec_7_4_tex}
+{subsec_7_5_tex}
+{subsec_7_6_tex}
+""" if (incluir_sec_7 and (incluir_subsec_7_1 or incluir_subsec_7_2 or incluir_subsec_7_3 or incluir_subsec_7_4 or incluir_subsec_7_5 or incluir_subsec_7_6)) else ""
     bloque_s7 += generar_latex_secciones_personalizadas("sec_7", params, es_autogenerador)
 
-    bloque_s8 = f"""% =====================================================================
+    # --- SECCIÓN 8: VERIFICACIÓN DE PROTECCIONES Y SUBSECCIONES ---
+    subsec_8_1_tex = rf"""\subsection{{\textit{{Parámetros del Sistema AC}}}}
+\begin{{center}}
+    \begin{{minipage}}{{1\textwidth}}
+        \centering
+        \captionof{{table}}{{Parámetros del Sistema AC.}}
+        \label{{tab:sistemaAC}}
+        \sistemaAC
+        {{\scriptsize
+        \textbf{{\textit{{{ac_nota_pie}}}}}\par
+        }}
+    \end{{minipage}}
+\end{{center}}
+""" if incluir_subsec_8_1 else ""
+
+    subsec_8_2_tex = rf"""\subsection{{\textit{{Equipos de Protección}}}}
+\begin{{center}}
+    \begin{{minipage}}{{1\textwidth}}
+        \centering
+        \captionof{{table}}{{Protección {sigla_proyecto}}}
+        \label{{tab:SEL}}
+        \begingroup
+        \setlength{{\tabcolsep}}{{8pt}}
+        \renewcommand{{\arraystretch}}{{1.2}}
+        \begin{{tabular}}{{|l|c|c|c|}}
+            \hline
+            \rowcolor{{azulSeyep}}
+            \multicolumn{{1}}{{|c|}}{{\color{{white}}\textbf{{Protege}}}} & \color{{white}}\textbf{{TIPO}} & \color{{white}}\textbf{{REFERENCIA}} & \color{{white}}\textbf{{TC / TP}} \\ \hline
+            {gd_protege} & {gd_tipo} & {gd_ref} & {gd_tctp} \\ \hline
+        \end{{tabular}}
+        \endgroup
+    \end{{minipage}}
+\end{{center}}
+\begin{{center}}
+    \begin{{minipage}}{{1\textwidth}}
+        \centering
+        \captionof{{table}}{{Protección Inversores}}
+        \label{{tab:LSI}}
+        \begingroup
+        \setlength{{\tabcolsep}}{{8pt}}
+        \renewcommand{{\arraystretch}}{{1.2}}
+        \begin{{tabular}}{{|l|c|c|}}
+            \hline
+            \rowcolor{{azulSeyep}}
+            \multicolumn{{1}}{{|c|}}{{\color{{white}}\textbf{{Protege}}}} & \color{{white}}\textbf{{TIPO}} & \color{{white}}\textbf{{Ajuste}} \\ \hline
+            {inv_protege} & {inv_tipo} & {inv_ajuste} \\ \hline
+        \end{{tabular}}
+        \endgroup
+    \end{{minipage}}
+\end{{center}}
+En el circuito se tienen la siguientes protecciones por parte del OR:
+\begin{{center}}
+    \begin{{minipage}}{{1\textwidth}}
+        \centering
+        \captionof{{table}}{{Protección del circuito \recoCTO}}
+        \label{{tab:SEL_OR}}
+        \begingroup
+        \setlength{{\tabcolsep}}{{8pt}}
+        \renewcommand{{\arraystretch}}{{1.2}}
+        \begin{{tabular}}{{|l|c|}}
+            \hline
+            \rowcolor{{azulSeyep}}
+            \multicolumn{{1}}{{|c|}}{{\color{{white}}\textbf{{Protege}}}} & \color{{white}}\textbf{{TIPO}} \\ \hline
+            {or_protege} & {or_tipo_desc} \\ \hline
+        \end{{tabular}}
+        \endgroup
+    \end{{minipage}}
+\end{{center}}
+""" if incluir_subsec_8_2 else ""
+
+    subsec_8_3_tex = rf"""\subsection{{\textit{{Ajustes de Protección para el Reconectador del Proyecto}}}}
+\begin{{center}}
+    \begin{{minipage}}{{1\textwidth}}
+        \centering
+        \captionof{{table}}{{Ajustes de protección para el Reconectador \nombreProyecto.}}
+        \label{{tab:ajustesrecoProyecto}}
+        \begingroup
+        \adjustbox{{max width=\textwidth}}{{%
+        \setlength{{\tabcolsep}}{{8pt}}
+        \renewcommand{{\arraystretch}}{{1.3}}
+        \begin{{tabular}}{{|l|c|c|c|}}
+            \hline
+            \rowcolor{{azulSeyep}}
+            \multicolumn{{1}}{{|c|}}{{\color{{white}}\textbf{{Parámetro}}}} & \color{{white}}\textbf{{Pick Up [Aprim]}} & \color{{white}}\textbf{{DIAL [s]}} & \color{{white}}\textbf{{Curva}} \\ \hline
+            {contenido_filas_reco}
+        \end{{tabular}}%
+        }}
+        \endgroup
+    \end{{minipage}}
+\end{{center}}
+""" if incluir_subsec_8_3 else ""
+
+    subsec_8_4_tex = rf"""\subsection{{\textit{{Resumen Ajuste de Protecciones Sistemáticas}}}}
+\begin{{table}}[H]
+    \centering
+    \captionof{{table}}{{Resumen ajuste de protecciones sistemáticas para generadores basados en inversores y frecuencia variable de capacidad instalada o nominal > 0,25 MW conectados al SDL}}
+    \label{{tab:resumenajustestotales}}
+    \begingroup
+    \adjustbox{{max width=\textwidth}}{{%
+        \renewcommand{{\arraystretch}}{{1.3}}
+        \begin{{tabular}}{{|c|c|c|}}
+            \hline
+            \rowcolor{{azulSeyep}}
+            \textbf{{\color{{white}}Función}} & \textbf{{\color{{white}}Ajustes}} & \textbf{{\color{{white}}Temporización}} \\ \hline
+            {contenido_filas_sist}
+        \end{{tabular}}
+    }}
+    \endgroup
+\end{{table}}
+""" if incluir_subsec_8_4 else ""
+
+    bloque_s8 = rf"""% =====================================================================
 % SECCIÓN 8: VERIFICACIÓN DE PROTECCIONES
 % =====================================================================
-\\section{{VERIFICACIÓN DE PROTECCIONES}}
-La verificación de protecciones se realiza en el documento ``EACP'' suministrado como anexo. Con el objetivo de plasmar en este documento la información básica de los elementos que componen el sistema de porotecciones, se citan las tablas resumen a continuación:
-\\\\
-
-\\sistemaAC
-
-En el sistema fotovoltaico y tablero principal existen las siguientes protecciones:
-
-\\begin{{center}}
-    \\begin{{minipage}}{{1\\textwidth}}
-        \\centering
-        \\captionof{{table}}{{Protección {sigla_proyecto} \\nombreProyecto}}
-        \\label{{tab:SEL}}
-        \\begingroup
-        \\setlength{{\\tabcolsep}}{{8pt}}
-        \\renewcommand{{\\arraystretch}}{{1.2}}
-        \\begin{{tabular}}{{|l|c|c|c|}}
-            \\hline
-            \\rowcolor{{azulSeyep}}
-            \\multicolumn{{1}}{{|c|}}{{\\color{{white}}\\textbf{{Protege}}}} & \\color{{white}}\\textbf{{TIPO}} & \\color{{white}}\\textbf{{REFERENCIA}} & \\color{{white}}\\textbf{{TC / TP}} \\\\ \\hline
-            {gd_protege} & {gd_tipo} & {gd_ref} & {gd_tctp} \\\\ \\hline
-        \\end{{tabular}}
-        \\endgroup
-    \\end{{minipage}}
-\\end{{center}}
-
-\\begin{{center}}
-    \\begin{{minipage}}{{1\\textwidth}}
-        \\centering
-        \\captionof{{table}}{{Protección Inversores}}
-        \\label{{tab:LSI}}
-        \\begingroup
-        \\setlength{{\\tabcolsep}}{{8pt}}
-        \\renewcommand{{\\arraystretch}}{{1.2}}
-        \\begin{{tabular}}{{|l|c|c|}}
-            \\hline
-            \\rowcolor{{azulSeyep}}
-            \\multicolumn{{1}}{{|c|}}{{\\color{{white}}\\textbf{{Protege}}}} & \\color{{white}}\\textbf{{TIPO}} & \\color{{white}}\\textbf{{Ajuste}} \\\\ \\hline
-            {inv_protege} & {inv_tipo} & {inv_ajuste} \\\\ \\hline
-        \\end{{tabular}}
-        \\endgroup
-    \\end{{minipage}}
-\\end{{center}}
-
-En el circuito se tienen la siguientes protecciones por parte del OR:
-
-\\begin{{center}}
-    \\begin{{minipage}}{{1\\textwidth}}
-        \\centering
-        \\captionof{{table}}{{Protección del circuito \\recoCTO}}
-        \\label{{tab:SEL_OR}}
-        \\begingroup
-        \\setlength{{\\tabcolsep}}{{8pt}}
-        \\renewcommand{{\\arraystretch}}{{1.2}}
-        \\begin{{tabular}}{{|l|c|}}
-            \\hline
-            \\rowcolor{{azulSeyep}}
-            \\multicolumn{{1}}{{|c|}}{{\\color{{white}}\\textbf{{Protege}}}} & \\color{{white}}\\textbf{{TIPO}} \\\\ \\hline
-            {or_protege} & {or_tipo_desc} \\\\ \\hline
-        \\end{{tabular}}
-        \\endgroup
-    \\end{{minipage}}
-\\end{{center}}
-
-El resto de consideraciones en cuanto a protecciones se dejan plasmados en el anexo ``Anexo EACP''. El resumen de los ajustes establecidos en dicho documento se muestra en las \\cref{{tab:ajustesrecoProyecto,tab:resumenajustestotales}}.
-
-\\begin{{center}}
-    \\begin{{minipage}}{{1\\textwidth}}
-        \\centering
-        \\captionof{{table}}{{Ajustes de protección para el Reconectador \\nombreProyecto.}}
-        \\label{{tab:ajustesrecoProyecto}}
-        \\begingroup
-        \\adjustbox{{max width=\\textwidth}}{{%
-        \\setlength{{\\tabcolsep}}{{8pt}}
-        \\renewcommand{{\\arraystretch}}{{1.3}}
-        \\begin{{tabular}}{{|l|c|c|c|}}
-            \\hline
-            \\rowcolor{{azulSeyep}}
-            \\multicolumn{{1}}{{|c|}}{{\\color{{white}}\\textbf{{Parámetro}}}} & \\color{{white}}\\textbf{{Pick Up [Aprim]}} & \\color{{white}}\\textbf{{DIAL [s]}} & \\color{{white}}\\textbf{{Curva}} \\\\ \\hline
-            {contenido_filas_reco}
-        \\end{{tabular}}%
-        }}
-        \\endgroup
-    \\end{{minipage}}
-\\end{{center}}
-
-\\begin{{table}}[H]
-    \\centering
-    \\captionof{{table}}{{Resumen ajuste de protecciones sistemáticas para generadores basados en inversores y frecuencia variable de capacidad instalada o nominal > 0,25 MW conectados al SDL}}
-    \\label{{tab:resumenajustestotales}}
-    \\begingroup
-    \\adjustbox{{max width=\\textwidth}}{{%
-        \\renewcommand{{\\arraystretch}}{{1.3}}
-        \\begin{{tabular}}{{|c|c|c|}}
-            \\hline
-            \\rowcolor{{azulSeyep}}
-            \\textbf{{\\color{{white}}Función}} & \\textbf{{\\color{{white}}Ajustes}} & \\textbf{{\\color{{white}}Temporización}} \\\\ \\hline
-            {contenido_filas_sist}
-        \\end{{tabular}}
-    }}
-    \\endgroup
-\\end{{table}}
-
-""" if incluir_sec_8 else ""
+\newpage
+\section{{VERIFICACIÓN DE PROTECCIONES}}
+{subsec_8_1_tex}
+{subsec_8_2_tex}
+{subsec_8_3_tex}
+{subsec_8_4_tex}
+""" if (incluir_sec_8 and (incluir_subsec_8_1 or incluir_subsec_8_2 or incluir_subsec_8_3 or incluir_subsec_8_4)) else ""
     bloque_s8 += generar_latex_secciones_personalizadas("sec_8", params, es_autogenerador)
 
-    bloque_s9 = f"""% =====================================================================
+    # --- SECCIÓN 9: CONCLUSIONES ---
+    bloque_s9 = rf"""% =====================================================================
 % SECCIÓN 9: CONCLUSIONES Y SECCIÓN 10: ANEXOS
 % =====================================================================
-\\clearpage
-\\section{{CONCLUSIONES}}
-\\CONCLUSIONES
+\clearpage
+\section{{CONCLUSIONES}}
+\CONCLUSIONES
 """ if incluir_sec_9 else ""
     bloque_s9 += generar_latex_secciones_personalizadas("sec_9", params, es_autogenerador)
 
+    # --- SECCIÓN 10: ANEXOS ---
     bloque_s10 = bloque_seccion_anexos if incluir_sec_10 else ""
     bloque_s10 += generar_latex_secciones_personalizadas("sec_10", params, es_autogenerador)
 
