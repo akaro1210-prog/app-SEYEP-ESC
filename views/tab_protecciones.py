@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from secciones_manager import render_control_seccion, render_boton_agregar_seccion
+from secciones_manager import render_control_seccion, render_control_subseccion, render_boton_agregar_seccion
 
 def render(config_vars=None):
     if config_vars is None:
@@ -16,6 +16,7 @@ def render(config_vars=None):
     render_control_seccion("sec_8", f"Sección 8: Verificación de Protecciones ({tag})")
 
     st.markdown("### 8.1 Parámetros del Sistema AC (`\\sistemaAC`)")
+    render_control_subseccion("subsec_8_1", "Subsección 8.1: Parámetros del Sistema AC (\\sistemaAC)")
     col_ac1, col_ac2, col_ac3 = st.columns(3)
     with col_ac1:
         ac_fases = st.text_input("Sistema AC:", value=r"$3~\phi$")
@@ -29,6 +30,7 @@ def render(config_vars=None):
 
     st.markdown("---")
     st.markdown(f"### 8.2 Tablas de Equipos de Protección ({tag})")
+    render_control_subseccion("subsec_8_2", f"Subsección 8.2: Equipos y Filosofía de Protección ({tag})")
 
     c_p1, c_p2, c_p3 = st.columns(3)
     with c_p1:
@@ -49,6 +51,7 @@ def render(config_vars=None):
 
     st.markdown("---")
     st.markdown("### 8.3 Ajustes de Protección para el Reconectador del Proyecto (`tab:ajustesrecoProyecto`)")
+    render_control_subseccion("subsec_8_3", "Subsección 8.3: Ajustes de Protección para el Reconectador del Proyecto")
     df_reco_default = pd.DataFrame([
         {"Parámetro": "ANSI 51", "Pick Up [Aprim]": "44", "DIAL [s]": "0,05", "Curva": "IEC - EI"},
         {"Parámetro": "ANSI 50", "Pick Up [Aprim]": "200", "DIAL [s]": "0,0", "Curva": "DT"},
@@ -64,6 +67,7 @@ def render(config_vars=None):
 
     st.markdown("---")
     st.markdown("### 8.4 Resumen Ajuste de Protecciones Sistemáticas (`tab:resumenajustestotales`)")
+    render_control_subseccion("subsec_8_4", "Subsección 8.4: Resumen de Protecciones Sistemáticas (Acuerdo CNO)")
     df_sist_default = pd.DataFrame([
         {"Función": "Etapa 1: Baja tensión (ANSI 27)", "Ajustes": "0.6 p.u", "Temporización": "2 s"},
         {"Función": "Etapa 2: Baja tensión (ANSI 27)", "Ajustes": "0.4 p.u", "Temporización": "1.5 s"},
