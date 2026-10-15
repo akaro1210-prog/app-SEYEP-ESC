@@ -1,47 +1,77 @@
-import os
 import streamlit as st
-from PIL import Image
+import pandas as pd
+import os
+from project_manager import obtener_df, obtener_ver
 
-def render():
-    st.subheader("Logotipo del Cliente")
-    st.markdown("Sube la imagen del logotipo del cliente (formatos permitidos: **PNG, JPG, JPEG**).")
-
-    logo_filename = "Logo_Cliente.png"
-
-    # Componente para subir archivo
-    uploaded_file = st.file_uploader(
-        "Seleccionar archivo de imagen", 
-        type=["png", "jpg", "jpeg"],
-        key="logo_uploader"
-    )
-
+def guardar_archivo_subido(uploaded_file, nombre_destino):
     if uploaded_file is not None:
         try:
-            # Abrimos la imagen con PIL para verificar que sea válida y convertirla a RGB/PNG estándar
-            image = Image.open(uploaded_file)
-            
-            # Si tiene transparencia (RGBA) o paleta, la guardamos asegurando compatibilidad total
-            if image.mode in ("RGBA", "P"):
-                image = image.convert("RGBA")
-            else:
-                image = image.convert("RGB")
-                
-            # Guardamos la imagen procesada de forma limpia en disco
-            image.save(logo_filename, "PNG")
-            st.success("¡Logotipo cargado y procesado exitosamente!")
-        except Exception as e:
-            st.error(f"El archivo seleccionado no es una imagen válida o está corrupto. Error: {e}")
+            from PIL import Image
+            img = Image.open(uploaded_file)
+            img = img.convert("RGBA") if img.mode in ("RGBA", "P") else img.convert("RGB")
+            img.save(nombre_destino, "PNG")
+        except Exception:
+            with open(nombre_destino, "wb") as f:
+                f.write(uploaded_file.getbuffer())
+        return True
+    return False
 
-    # Si ya existe un logo guardado (ya sea de antes o recién subido), lo mostramos
-    if os.path.exists(logo_filename):
-        try:
-            st.markdown("---")
-            st.markdown("**Logotipo actual en uso para la portada:**")
-            # Mostramos usando la ruta en texto plano (string) para evitar el error de BytesIO
-            st.image(logo_filename, width=250)
-            return logo_filename
-        except Exception as e:
-            st.warning(f"No se pudo previsualizar la imagen actual: {e}")
-            return logo_filename
-            
-    return None
+def estado_archivo(nombre_archivo):
+    return "✅ Cargado" if os.path.exists(nombre_archivo) else "⚠️ Pendiente"
+
+def render():
+    ver = obtener_ver()
+    st.subheader("🖼️ Portada (Logo del Cliente) y Control de Cambios")
+    st.write("Sube el logo del cliente para la portada del **ANEXO EACP** y edita las filas de la tabla de Control de Cambios (`\\controlcambios`).")
+
+    col_l1, col_l2 = st.columns([1, 1])
+    with col_l1:
+        st.markdown("#### 1. Logo del Cliente (`Logo_Cliente.png`)")
+        up_logo = st.file_uploader(
+            f"Subir Logo para Portada ({estado_archivo('Logo_Cliente.png')}):",
+            type=["png", "jpg", "jpeg"],
+            key=f"up_logo_eacp_{ver}"
+        )
+        if guardar_archivo_subido(up_logo, "Logo_Cliente.png"):
+            st.success("✅ Logo_Cliente.png guardado correctamente.")
+
+    with col_l2:
+        st.markdown("#### 2. Encabezado y Pie de Página Corporativos")
+        st.caption("Si ya están en la carpeta del proyecto se usan automáticamente; si deseas actualizarlos puedes subirlos aquí:")
+        up_enc = st.file_uploader(
+            f"Encabezado.png ({estado_archivo('Encabezado.png')})",
+            type=["png", "jpg", "jpeg"],
+            key=f"up_enc_eacp_{ver}"
+        )
+        if guardar_archivo_subido(up_enc, "Encabezado.png"):
+            st.success("✅ Encabezado.png actualizado.")
+        up_pie = st.file_uploader(
+            f"Piedepagina.png ({estado_archivo('Piedepagina.png')})",
+            type=["png", "jpg", "jpeg"],
+            key=f"up_pie_eacp_{ver}"
+        )
+        if guardar_archivo_subido(up_pie, "Piedepagina.png"):
+            st.success("✅ Piedepagina.png actualizado.")
+
+    st.markdown("---")
+    st.markdown("### 📝 Tabla de Control de Cambios (`\\controlcambios`)")
+    st.caption("Puedes agregar nuevas filas cuando el OR solicite ajustes sobre una revisión:")
+
+    df_default = pd.DataFrame([
+        {
+            "VERSIÓN No.": "0",
+            "DESCRIPCIÓN": "Análisis Estudio Coordinación de Protecciones.",
+            "FECHA": "23/09/2026",
+            "OBSERVACIONES": ""
+        }
+    ])
+
+    df_control_cambios = st.data_editor(
+        obtener_df("df_control_cambios", df_default),
+        num_rows="dynamic",
+        use_container_width=True,
+        key=f"editor_cambios_eacp_{ver}"
+    )
+
+    st.session_state["df_control_cambios"] = df_control_cambios
+    return df_control_cambios
