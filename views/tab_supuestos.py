@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import os
+from secciones_manager import render_control_subseccion
 
 TEXTO_ESTANDAR_1_2 = (
     "\\subsection{\\textit{Supuestos y herramienta de modelación}}\n"
@@ -14,6 +15,7 @@ TEXTO_ESTANDAR_1_2 = (
 
 def render():
     st.subheader("Sección 1.2: Supuestos y herramienta de modelación")
+    render_control_subseccion("subsec_1_2", "Subsección 1.2: Supuestos y herramienta de modelación")
     st.write("Selecciona o edita los párrafos descriptivos y la procedencia de la tabla de crecimiento de demanda.")
 
     with st.expander("📄 Ver texto estándar fijo de la Sección 1.2", expanded=True):
