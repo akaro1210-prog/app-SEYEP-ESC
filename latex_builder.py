@@ -551,6 +551,128 @@ def buscar_param(params, candidatos, default=""):
 
     return default
 
+def adaptar_texto_regimen(texto, es_autogen):
+    """
+    Adapta automáticamente textos y párrafos del informe según el régimen
+    seleccionado: Generación Distribuida (GD) o Autogenerador.
+    Garantiza que todo el documento quede completamente relacionado a esa opción.
+    """
+    if not isinstance(texto, str) or not texto.strip():
+        return texto
+    t = texto
+    if es_autogen:
+        t = t.replace(r"GD \nombreProyecto", r"Autogenerador \nombreProyecto")
+        t = t.replace(r"GD\nombreProyecto", r"Autogenerador \nombreProyecto")
+        t = t.replace(r"GD \capacidadMW", r"Autogenerador \capacidadMW")
+        t = t.replace(r"de GD \capacidadMW", r"de Autogeneración \capacidadMW")
+        t = t.replace(r"del GD \nombreProyecto", r"del Autogenerador \nombreProyecto")
+        t = t.replace(r"al GD \nombreProyecto", r"al Autogenerador \nombreProyecto")
+        t = t.replace(r"el GD \nombreProyecto", r"el Autogenerador \nombreProyecto")
+        t = t.replace(r"proyecto GD", r"proyecto Autogenerador")
+        t = t.replace(r"Proyecto GD", r"Proyecto Autogenerador")
+        t = t.replace(r"estable con GD", r"estable con Autogenerador")
+        t = t.replace(r"operación del GD", r"operación del Autogenerador")
+        t = t.replace(r"instalación del GD", r"instalación del Autogenerador")
+        t = t.replace(r"donde los Generadores Distribuidos (GD)", r"donde los Autogeneradores")
+        t = t.replace(r"Generadores Distribuidos (GD)", r"Autogeneradores")
+        t = t.replace(r"Protección GD", r"Protección Autogenerador")
+        t = t.replace(r"protección GD", r"protección Autogenerador")
+    else:
+        t = t.replace(r"Autogenerador \nombreProyecto", r"GD \nombreProyecto")
+        t = t.replace(r"de Autogeneración \capacidadMW", r"de GD \capacidadMW")
+        t = t.replace(r"del Autogenerador \nombreProyecto", r"del GD \nombreProyecto")
+        t = t.replace(r"al Autogenerador \nombreProyecto", r"al GD \nombreProyecto")
+        t = t.replace(r"el Autogenerador \nombreProyecto", r"el GD \nombreProyecto")
+        t = t.replace(r"proyecto Autogenerador", r"proyecto GD")
+        t = t.replace(r"Proyecto Autogenerador", r"Proyecto GD")
+        t = t.replace(r"estable con Autogenerador", r"estable con GD")
+        t = t.replace(r"operación del Autogenerador", r"operación del GD")
+        t = t.replace(r"instalación del Autogenerador", r"instalación del GD")
+        t = t.replace(r"donde los Autogeneradores", r"donde los Generadores Distribuidos (GD)")
+        t = t.replace(r"Protección Autogenerador", r"Protección GD")
+        t = t.replace(r"protección Autogenerador", r"protección GD")
+    return t
+
+
+def generar_latex_secciones_personalizadas(sec_padre, params, es_autogen):
+    secciones_pers = params.get("secciones_personalizadas", [])
+    if not isinstance(secciones_pers, list):
+        try:
+            import streamlit as st
+            secciones_pers = st.session_state.get("secciones_personalizadas", [])
+        except Exception:
+            secciones_pers = []
+    
+    bloques = []
+    for s in secciones_pers:
+        if s.get("padre") == sec_padre:
+            tit = s.get("titulo", "Sección Personalizada").strip()
+            tit_escapado = escapar_latex(tit)
+            nivel_str = s.get("nivel", "\subsection")
+            if "\subsubsection" in nivel_str:
+                cmd_nivel = f"\subsubsection{{{tit_escapado}}}"
+            elif "\section" in nivel_str:
+                cmd_nivel = f"\clearpage\section{{{tit_escapado}}}"
+            else:
+                cmd_nivel = f"\subsection{{{tit_escapado}}}"
+            
+            raw_contenido = s.get("contenido", "")
+            contenido_adaptado = adaptar_texto_regimen(raw_contenido, es_autogen)
+            
+            bloque_s = f"""
+
+{cmd_nivel}
+{contenido_adaptado}
+"""
+            
+            # Tabla adicional si fue activada
+            if s.get("incluir_tabla"):
+                cap_tab = escapar_latex(s.get("tabla_caption", "Tabla de Parámetros Adicionales"))
+                tab_txt = s.get("tabla_texto", "").strip()
+                if "&" not in tab_txt and "," in tab_txt:
+                    filas = []
+                    for linea in tab_txt.splitlines():
+                        if linea.strip():
+                            filas.append(" & ".join([escapar_latex(c.strip()) for c in linea.split(",")]) + r" \ \hline")
+                    cuerpo_tab = "\\n".join(filas)
+                    num_cols = max([len(linea.split(",")) for linea in tab_txt.splitlines() if linea.strip()] or [2])
+                    spec_cols = "|" + "c|" * num_cols
+                else:
+                    cuerpo_tab = tab_txt
+                    spec_cols = "|c|c|"
+                
+                bloque_s += f"""
+\begin{{table}}[H]
+    \centering
+    \caption{{{cap_tab}}}
+    \begingroup
+    \adjustbox{{max width=\textwidth}}{{%
+        \renewcommand{{\arraystretch}}{{1.3}}
+        \begin{{tabular}}{{{spec_cols}}}
+            \hline
+            {cuerpo_tab}
+        \end{{tabular}}
+    }}
+    \endgroup
+\end{{table}}
+"""
+            # Figura adicional si fue cargada
+            if s.get("incluir_figura") and s.get("figura_nombre"):
+                nom_fig = s.get("figura_nombre")
+                cap_fig = escapar_latex(s.get("figura_caption", "Figura Adicional"))
+                bloque_s += f"""
+\begin{{figure}}[H]
+    \centering
+    \adjustbox{{max width=\textwidth, max height=0.45\textheight}}{{%
+        \includegraphics[keepaspectratio]{{{nom_fig}}}
+    }}
+    \caption{{{cap_fig}}}
+\end{{figure}}
+"""
+            bloques.append(bloque_s)
+    return "\n\n".join(bloques)
+
+
 def compilar_estudio_latex(params):
     if params is None:
         params = {}
@@ -563,8 +685,30 @@ def compilar_estudio_latex(params):
                 for sub_k, sub_v in st.session_state[k_sess].items():
                     if sub_k not in params:
                         params[sub_k] = sub_v
+        if "tipo_estudio" in st.session_state and "tipo_estudio" not in params:
+            params["tipo_estudio"] = st.session_state["tipo_estudio"]
+        if "es_autogenerador" in st.session_state and "es_autogenerador" not in params:
+            params["es_autogenerador"] = st.session_state["es_autogenerador"]
+        sec_activas = st.session_state.get("secciones_activas", {})
+        for sec_id in ["sec_1", "sec_2", "sec_3", "sec_4", "sec_5", "sec_6", "sec_7", "sec_8", "sec_9", "sec_10"]:
+            k_inc = f"incluir_{sec_id}"
+            if k_inc not in params and sec_id in sec_activas:
+                params[k_inc] = sec_activas[sec_id]
+        if "secciones_personalizadas" not in params and "secciones_personalizadas" in st.session_state:
+            params["secciones_personalizadas"] = st.session_state["secciones_personalizadas"]
     except Exception:
         pass
+
+    # 0. Determinación del régimen: Generación Distribuida (GD) vs Autogenerador
+    tipo_estudio_raw = str(buscar_param(params, ["tipo_estudio", "tipoEstudio", "regimen"], "GD"))
+    es_autogenerador = ("autogenerador" in tipo_estudio_raw.lower() or bool(params.get("es_autogenerador", False)))
+
+    sigla_proyecto = "Autogenerador" if es_autogenerador else "GD"
+    nombre_regimen = "autogeneración" if es_autogenerador else "generación distribuida"
+    nombre_regimen_cap = "Autogeneración" if es_autogenerador else "Generación Distribuida"
+    titulo_portada_regimen = "AUTOGENERACIÓN" if es_autogenerador else "GENERACIÓN DISTRIBUIDA"
+    plural_generadores = "Autogeneradores" if es_autogenerador else "Generadores Distribuidos (GD)"
+    regimen_normativo = "Autogeneradores" if es_autogenerador else "Generadores Distribuidos"
 
     # 1. Variables principales del proyecto (con búsqueda flexible de llaves de tab_variables.py)
     nombre_proyecto = escapar_latex(buscar_param(params, ["nombreProyecto", "nombre_proyecto", "proyecto"], "Arboreo"))
@@ -668,8 +812,8 @@ def compilar_estudio_latex(params):
         "resumen_intro",
         "Para el presente documento se han realizado los siguientes estudios técnicos con el propósito de evaluar la viabilidad del proyecto:"
     )
-    resumen_flujo = params.get("resumen_flujo", "")
-    resumen_cortocircuito = params.get("resumen_cortocircuito", "")
+    resumen_flujo = adaptar_texto_regimen(params.get("resumen_flujo", ""), es_autogenerador)
+    resumen_cortocircuito = adaptar_texto_regimen(params.get("resumen_cortocircuito", ""), es_autogenerador)
     resumen_protecciones = params.get("resumen_protecciones", "")
     resumen_cierre = params.get(
         "resumen_cierre",
@@ -718,10 +862,10 @@ def compilar_estudio_latex(params):
             bloque_logo = ""
 
     # 4. Datos Secciones 2 y 3
-    sec2_intro = params.get(
-        "sec2_intro",
-        r"El proyecto \nombreProyecto\ de GD \capacidadMW, se conectará al SIN a través del circuito \CTO\ de la S/E \SSEE\ al nivel de tensión \NT, propiedad del operador de red \OR, La ubicación del proyecto es \ubicacion. En la \cref{tab:coordenadas} se detallan las coordenadas geográficas para la ubicación del proyecto GD \nombreProyecto. El proyecto cuenta con una fecha en puesta de operación (en adelante FPO) para \FechaEntrada. En la \cref{tab:descripcion_proyecto} se resumen las especificaciones técnicas de los equipos que conforman el proyecto."
+    default_sec2_intro = (
+        rf"El proyecto \nombreProyecto\ de {nombre_regimen_cap} \capacidadMW, se conectará al SIN a través del circuito \CTO\ de la S/E \SSEE\ al nivel de tensión \NT, propiedad del operador de red \OR, La ubicación del proyecto es \ubicacion. En la \cref{{tab:coordenadas}} se detallan las coordenadas geográficas para la ubicación del proyecto {sigla_proyecto} \nombreProyecto. El proyecto cuenta con una fecha en puesta de operación (en adelante FPO) para \FechaEntrada. En la \cref{{tab:descripcion_proyecto}} se resumen las especificaciones técnicas de los equipos que conforman el proyecto."
     )
+    sec2_intro = adaptar_texto_regimen(params.get("sec2_intro", default_sec2_intro), es_autogenerador)
     vida_util = escapar_latex(params.get("vida_util", "30 años."))
     tipo_fuente = escapar_latex(params.get("tipo_fuente", "Energía Solar"))
     tipo_panel_etiqueta = escapar_latex(params.get("tipo_panel_etiqueta", "Panel Solar Bifacial"))
@@ -756,10 +900,10 @@ En la \\cref{{fig:georeferencia}}, se presenta el diagrama eléctrico geoespacia
         r"Sumado a \cantidadInversoruno\ inversores de 150 kW, 4 de ellos con 300 paneles cada uno y los otros dos con 280 cada uno, su tensión de salida es de 800 V – 60 Hz respectivamente. En la \cref{fig:fichainversoruno}, se aprecia las características operativas de los inversores instalados en el sistema de generación."
     )
     img_ficha_panel = incluir_imagen_segura("Ficha panel.png", "width=17cm")
-    sec3_or_texto = params.get(
-        "sec3_or_texto",
-        r"El proyecto GD \nombreProyecto\ se conectará al circuito \CTO\, por tanto, el OR suministro a través de los insumos datos de red de todo el circuito y ajuste de coordinación de protecciones."
+    default_sec3_or_texto = (
+        rf"El proyecto {sigla_proyecto} \nombreProyecto\ se conectará al circuito \CTO\, por tanto, el OR suministro a través de los insumos datos de red de todo el circuito y ajuste de coordinación de protecciones."
     )
+    sec3_or_texto = adaptar_texto_regimen(params.get("sec3_or_texto", default_sec3_or_texto), es_autogenerador)
     usar_equivalente_png = params.get("usar_equivalente_png", True)
     if usar_equivalente_png:
         img_eq_red = incluir_imagen_segura("equivalentered.png", "height=0.23\\textheight, keepaspectratio")
@@ -821,7 +965,7 @@ En la \\cref{{fig:georeferencia}}, se presenta el diagrama eléctrico geoespacia
     )
     csv_consumo_vs_gen = incluir_csv_seguro(
         "col sep=semicolon, skip rows between index={500}{5000}",
-        "Consumo de energía en el punto de instalación del GD y generación de energía proyectada.",
+        f"Consumo de energía en el punto de instalación del {sigla_proyecto} y generación de energía proyectada.",
         "tab:consumoVSgeneracion",
         "consumoVSgeneracion.csv"
     )
@@ -911,9 +1055,12 @@ En la \\cref{{tab:cargabilidadMax,tab:PUMax_conting}} se presenta los valores ma
         bloque_contingencia = ""
 
     img_perdidas = incluir_imagen_segura("perdidas.png", "height=0.25\\textheight, keepaspectratio")
-    sec7_perdidas_texto = params.get(
-        "sec7_perdidas_texto",
-        r"El análisis técnico de los escenarios proyectados para \YearInicial\ y \YearFinal\, se evidencia que el incremento más significativo se presenta en el escenario de Hora 12, alcanzando deltas de 25,97 kW (\YearInicial) y 25,90 kW (\YearFinal); este comportamiento responde a la condición técnica donde los Generadores Distribuidos (GD) inyectan su máxima capacidad de energía mientras la demanda del circuito es mínima, lo que ocasiona flujos inversos de potencia a través de la red de distribución. Por el contrario, en los escenarios con coincidencia entre la generación y la carga, las pérdidas se mantienen en niveles bajos e impactan de manera marginal al sistema destacando variaciones de apenas approx 11 kW en el escenario de Hora 9, lo que demuestra que la absorción local de la energía producida evita el transporte prolongado de corriente y confirma que la integración de los proyectos no genera un impacto negativo ni degradante sobre la operación habitual del SDL."
+    default_sec7_perdidas = (
+        rf"El análisis técnico de los escenarios proyectados para \YearInicial\ y \YearFinal\, se evidencia que el incremento más significativo se presenta en el escenario de Hora 12, alcanzando deltas de 25,97 kW (\YearInicial) y 25,90 kW (\YearFinal); este comportamiento responde a la condición técnica donde los {plural_generadores} inyectan su máxima capacidad de energía mientras la demanda del circuito es mínima, lo que ocasiona flujos inversos de potencia a través de la red de distribución. Por el contrario, en los escenarios con coincidencia entre la generación y la carga, las pérdidas se mantienen en niveles bajos e impactan de manera marginal al sistema destacando variaciones de apenas approx 11 kW en el escenario de Hora 9, lo que demuestra que la absorción local de la energía producida evita el transporte prolongado de corriente y confirma que la integración de los proyectos no genera un impacto negativo ni degradante sobre la operación habitual del SDL."
+    )
+    sec7_perdidas_texto = adaptar_texto_regimen(
+        params.get("sec7_perdidas_texto", default_sec7_perdidas),
+        es_autogenerador
     )
     img_leyendas_cortos = incluir_imagen_segura("Leyendascortos.png", "width=1.0\\linewidth")
     img_cortos = incluir_imagen_segura("cortos.png", "width=1.075\\linewidth")
@@ -991,13 +1138,13 @@ En la \\cref{{tab:cargabilidadMax,tab:PUMax_conting}} se presenta los valores ma
         for _, r in df_conc.fillna("").iterrows():
             txt_c = str(r.get("Conclusión", "")).strip()
             if txt_c:
-                items_conclusiones.append(f"\\item {{{txt_c}}}")
+                items_conclusiones.append(f"\\item {{{adaptar_texto_regimen(txt_c, es_autogenerador)}}}")
     if not items_conclusiones:
         items_conclusiones = [
             r"\item {Los equipos empleados en el proyecto (Paneles Solares, Protecciones) cumplen con la certificación de conformidad RETIE.}",
-            r"\item {Las simulaciones de flujo en estado estable con GD se evidencian tensiones que se mantienen en los valores establecidos.}",
+            rf"\item {{Las simulaciones de flujo en estado estable con {sigla_proyecto} se evidencian tensiones que se mantienen en los valores establecidos.}}",
             r"\item {Los niveles de perdidasse mantienen con la introducción del proyecto.}",
-            r"\item {Las simulaciones de cortocircuito no presentan cambios mayores al 10\% con la entrada en operación del GD en ningún punto del circuito}",
+            rf"\item {{Las simulaciones de cortocircuito no presentan cambios mayores al 10\% con la entrada en operación del {sigla_proyecto} en ningún punto del circuito}}",
             r"\item {Los ajustes propuestos para el proyecto coordinan correctamente con las protecciones existentes, por lo tanto no se requiere cambios de ajustes en los elementos existentes.}",
             r"\item {Los inversores cumplen con las normas de equivalencia internacionales como lo son la IEEE1547 y la UL 1741 para la integración a la red. Su nivel de distorsión armónica de corriente según ficha técnica es <3\%.}",
             r"\item {El Sistema propuesto de 900 kWac no afecta de manera significativa la red de distribución y la potencia inyectada de los excedentes será consumida por la red.}"
@@ -1230,7 +1377,20 @@ Para el cálculo de la protección general de los inversores, se tuvieron en cue
 }}
 """
 
-    cuerpo_documento = f"""
+    
+    # --- Lectura de Secciones Activas u Opcionales ---
+    incluir_sec_1 = bool(params.get("incluir_sec_1", True))
+    incluir_sec_2 = bool(params.get("incluir_sec_2", True))
+    incluir_sec_3 = bool(params.get("incluir_sec_3", True))
+    incluir_sec_4 = bool(params.get("incluir_sec_4", True))
+    incluir_sec_5 = bool(params.get("incluir_sec_5", True))
+    incluir_sec_6 = bool(params.get("incluir_sec_6", True))
+    incluir_sec_7 = bool(params.get("incluir_sec_7", True))
+    incluir_sec_8 = bool(params.get("incluir_sec_8", True))
+    incluir_sec_9 = bool(params.get("incluir_sec_9", True))
+    incluir_sec_10 = bool(params.get("incluir_sec_10", True))
+
+    bloque_intro = f"""
 \\begin{{document}}
 
 % --- PORTADA ---
@@ -1238,7 +1398,7 @@ Para el cálculo de la protección general de los inversores, se tuvieron en cue
     \\thispagestyle{{fancy}}
     \\centering
     \\vspace*{{4cm}}
-    {{\\fontsize{{20}}{{30}}\\selectfont \\textbf{{ESTUDIO DE CONEXIÓN SIMPLIFICADO GENERACIÓN DISTRIBUIDA SOLAR FV}}}} \\\\[0.1cm]
+    {{\\fontsize{{20}}{{30}}\\selectfont \\textbf{{ESTUDIO DE CONEXIÓN SIMPLIFICADO {titulo_portada_regimen} SOLAR FV}}}} \\\\[0.1cm]
 
     {{\\fontsize{{22}}{{30}}\\selectfont \\textbf{{\\nombreProyecto{{}} - \\capacidadMW}}}} \\\\[3cm]
     {bloque_logo}
@@ -1273,13 +1433,14 @@ Para el cálculo de la protección general de los inversores, se tuvieron en cue
     \\listoffigures
 \\end{{center}}
 
-% =====================================================================
+"""
+    bloque_s1 = f"""% =====================================================================
 % SECCIÓN 1: RESUMEN EJECUTIVO
 % =====================================================================
 \\newpage
 \\section{{RESUMEN EJECUTIVO}}
 \\subsection{{\\textit{{Objetivo y alcance}}}}
-El presente documento tiene como objetivo principal analizar la viabilidad técnica del desarrollo del proyecto generación distribuida (GD) solar fotovoltaico \\nombreProyecto\\ en la red eléctrica de distribución de \\OR\\ en adelante OR (Operador de Red). El siguiente estudio se enfoca en proporcionar un análisis detallado de la conexión simplificada del sistema de generación distribuida a la red eléctrica existente. En tal estudio se resalta los parámetros eléctricos claves que garantizan la operación segura y eficiente del proyecto solar fotovoltaico GD \\nombreProyecto\\ con una potencia nominal de \\capacidadMW\\ , Este documento hace parte de lo establecido en el anexo 2 de la circular CREG 021 de 2022 y en el Capítulo 3 de la Resolución CREG 174 de 2021, la cual define el procedimiento de conexión para Generadores Distribuidos, y considerando los lineamientos de reporte de información de la Circular CREG 021 de 2022.\\\\
+El presente documento tiene como objetivo principal analizar la viabilidad técnica del desarrollo del proyecto {nombre_regimen} {f"({sigla_proyecto}) " if not es_autogenerador else ""}solar fotovoltaico \\nombreProyecto\\ en la red eléctrica de distribución de \\OR\\ en adelante OR (Operador de Red). El siguiente estudio se enfoca en proporcionar un análisis detallado de la conexión simplificada del sistema de {nombre_regimen} a la red eléctrica existente. En tal estudio se resalta los parámetros eléctricos claves que garantizan la operación segura y eficiente del proyecto solar fotovoltaico {sigla_proyecto} \\nombreProyecto\\ con una potencia nominal de \\capacidadMW\\ , Este documento hace parte de lo establecido en el anexo 2 de la circular CREG 021 de 2022 y en el Capítulo 3 de la Resolución CREG 174 de 2021, la cual define el procedimiento de conexión para {regimen_normativo}, y considerando los lineamientos de reporte de información de la Circular CREG 021 de 2022.\\\\
 
 \\subsection{{\\textit{{Supuestos y herramienta de modelación}}}}
 La información requerida para el modelamiento del área de influencia fue suministrada por el cliente y el OR comprendiendo el diagrama unifilar con sus respectivos nodos asociados al proyecto y sus respectivas cargas con el comportamiento en potencia activa y reactiva. El modelamiento de dicho diagrama unifilar se realizó en el software Digsilent Power Factory.\\\\
@@ -1292,7 +1453,10 @@ La información requerida para el modelamiento del área de influencia fue sumin
 \\resumen
 {resumen_cierre}
 
-% =====================================================================
+""" if incluir_sec_1 else ""
+    bloque_s1 += generar_latex_secciones_personalizadas("sec_1", params, es_autogenerador)
+
+    bloque_s2 = f"""% =====================================================================
 % SECCIÓN 2: DESCRIPCIÓN GENERAL DEL PROYECTO
 % =====================================================================
 \\section{{DESCRIPCIÓN GENERAL DEL PROYECTO}}
@@ -1320,13 +1484,13 @@ La información requerida para el modelamiento del área de influencia fue sumin
     \\centering
     \\caption{{Descripción general del proyecto.}}
     \\label{{tab:descripcion_proyecto}}
-    \\resizebox{{\\textwidth}}{{!}}{{%
+    \\adjustbox{{max width=\\textwidth}}{{%
         \\renewcommand{{\\arraystretch}}{{1.5}}
         \\begin{{tabular}}{{|c|c|c|c|}}
             \\hline
             \\rowcolor{{azulSeyep}}
             \\textbf{{\\textcolor{{white}}{{ÍTEM}}}} & \\multicolumn{{3}}{{c|}}{{\\textbf{{\\textcolor{{white}}{{DESCRIPCIÓN}}}}}} \\\\ \\hline
-            Proyecto. & \\multicolumn{{3}}{{c|}}{{GD \\nombreProyecto}} \\\\ \\hline
+            Proyecto. & \\multicolumn{{3}}{{c|}}{{{sigla_proyecto} \\nombreProyecto}} \\\\ \\hline
             Vida Útil & \\multicolumn{{3}}{{c|}}{{{vida_util}}} \\\\ \\hline
             Nodo y/o circuito de Conexión & \\multicolumn{{3}}{{c|}}{{\\nodo\\ / \\CTO{{}}}} \\\\ \\hline
             Potencia. & \\multicolumn{{3}}{{c|}}{{\\capacidadMW}} \\\\ \\hline
@@ -1358,11 +1522,14 @@ La información requerida para el modelamiento del área de influencia fue sumin
 \\begin{{figure}}[H]
     \\centering
     {img_ubicacion}
-    \\caption{{Ubicación Geográfica GD \\nombreProyecto\\ - \\capacidadMW\\ , Google Earth}}
+    \\caption{{Ubicación Geográfica {sigla_proyecto} \\nombreProyecto\\ - \\capacidadMW\\ , Google Earth}}
     \\label{{fig:ubicacion}}
 \\end{{figure}}
 
-% =====================================================================
+""" if incluir_sec_2 else ""
+    bloque_s2 += generar_latex_secciones_personalizadas("sec_2", params, es_autogenerador)
+
+    bloque_s3 = f"""% =====================================================================
 % SECCIÓN 3: PARÁMETROS ELÉCTRICOS DE LOS EQUIPOS Y OPERACIÓN DECLARADA
 % =====================================================================
 \\newpage
@@ -1388,7 +1555,10 @@ La información requerida para el modelamiento del área de influencia fue sumin
 \\leavevmode\\\\
 Dado lo anterior, la información suministrada se puede apreciar en las {bloque_informacion_or}
 
-% =====================================================================
+""" if incluir_sec_3 else ""
+    bloque_s3 += generar_latex_secciones_personalizadas("sec_3", params, es_autogenerador)
+
+    bloque_s4 = f"""% =====================================================================
 % SECCIÓN 4: INFORMACIÓN DE ENTRADA Y SUPUESTOS DE SALIDA
 % =====================================================================
 \\section{{INFORMACIÓN DE ENTRADA Y SUPUESTOS DE SALIDA}}
@@ -1449,7 +1619,10 @@ Dado lo anterior, la información suministrada se puede apreciar en las {bloque_
     \\label{{fig:consumoygeneracion}}
 \\end{{figure}}
 
-% =====================================================================
+""" if incluir_sec_4 else ""
+    bloque_s4 += generar_latex_secciones_personalizadas("sec_4", params, es_autogenerador)
+
+    bloque_s5 = f"""% =====================================================================
 % SECCIÓN 5: METODOLOGÍA
 % =====================================================================
 \\newpage
@@ -1488,7 +1661,10 @@ A continuación, se instalan los estudios realizados:
     \\item \\textbf{{Estudio de protecciones:}} Analizar el comportamiento de las protecciones del OR en conjunto con las del proyecto de generación para diferentes eventos en el SDL, buscando garantizar selectividad y confiabilidad.
 \\end{{itemize}}
 
-% =====================================================================
+""" if incluir_sec_5 else ""
+    bloque_s5 += generar_latex_secciones_personalizadas("sec_5", params, es_autogenerador)
+
+    bloque_s6 = f"""% =====================================================================
 % SECCIÓN 6: DESCRIPCIÓN DE LOS ESCENARIOS DE ANÁLISIS
 % =====================================================================
 \\section{{DESCRIPCIÓN DE LOS ESCENARIOS DE ANÁLISIS}}
@@ -1508,7 +1684,10 @@ Para clasificar cada uno de los resultados entregados en este estudio, se selecc
     \\end{{itemize}}
 \\end{{itemize}}
 
-% =====================================================================
+""" if incluir_sec_6 else ""
+    bloque_s6 += generar_latex_secciones_personalizadas("sec_6", params, es_autogenerador)
+
+    bloque_s7 = f"""% =====================================================================
 % SECCIÓN 7: RESULTADOS DE LOS ANÁLISIS ELÉCTRICOS
 % =====================================================================
 \\newpage
@@ -1556,7 +1735,7 @@ En la \\cref{{tab:TensionesPU}} se muestran los resultados de los perfiles de te
 
 \\CONCLUSIONFERFILESCARGA \\\\
 \\leavevmode\\\\
-Con el fin de evaluar el cambio en el perfil de tensión de los nodos de la zona de interés del proyecto GD \\nombreProyecto, se presentan los valores p.u. de las tensiones del circuito la \\cref{{fig:perfiltensionCTO}}
+Con el fin de evaluar el cambio en el perfil de tensión de los nodos de la zona de interés del proyecto {sigla_proyecto} \\nombreProyecto, se presentan los valores p.u. de las tensiones del circuito la \\cref{{fig:perfiltensionCTO}}
 
 \\begin{{figure}}[h]
     \\centering
@@ -1614,7 +1793,7 @@ Declaración técnica del equipo en cuanto al cumplimiento de los parámetros es
 \\\\
 La IEEE 1547 provee especificaciones y requerimientos técnicos referente al desempeño, operación, ensayos, consideraciones de seguridad y mantenimiento de los generadores que se integran al SIN. \\\\
 
-Los siguientes inversores propuestos para el proyecto GD \\nombreProyecto.
+Los siguientes inversores propuestos para el proyecto {sigla_proyecto} \\nombreProyecto.
 
 \\Inversores
 
@@ -1650,7 +1829,10 @@ De esta forma se presenta que:
 
 {sec7_isla_conclusion}
 
-% =====================================================================
+""" if incluir_sec_7 else ""
+    bloque_s7 += generar_latex_secciones_personalizadas("sec_7", params, es_autogenerador)
+
+    bloque_s8 = f"""% =====================================================================
 % SECCIÓN 8: VERIFICACIÓN DE PROTECCIONES
 % =====================================================================
 \\section{{VERIFICACIÓN DE PROTECCIONES}}
@@ -1664,12 +1846,11 @@ En el sistema fotovoltaico y tablero principal existen las siguientes proteccion
 \\begin{{center}}
     \\begin{{minipage}}{{1\\textwidth}}
         \\centering
-        \\captionof{{table}}{{Protección GD \\nombreProyecto}}
+        \\captionof{{table}}{{Protección {sigla_proyecto} \\nombreProyecto}}
         \\label{{tab:SEL}}
         \\begingroup
         \\setlength{{\\tabcolsep}}{{8pt}}
         \\renewcommand{{\\arraystretch}}{{1.2}}
-        \\small
         \\begin{{tabular}}{{|l|c|c|c|}}
             \\hline
             \\rowcolor{{azulSeyep}}
@@ -1688,7 +1869,6 @@ En el sistema fotovoltaico y tablero principal existen las siguientes proteccion
         \\begingroup
         \\setlength{{\\tabcolsep}}{{8pt}}
         \\renewcommand{{\\arraystretch}}{{1.2}}
-        \\small
         \\begin{{tabular}}{{|l|c|c|}}
             \\hline
             \\rowcolor{{azulSeyep}}
@@ -1709,7 +1889,6 @@ En el circuito se tienen la siguientes protecciones por parte del OR:
         \\begingroup
         \\setlength{{\\tabcolsep}}{{8pt}}
         \\renewcommand{{\\arraystretch}}{{1.2}}
-        \\small
         \\begin{{tabular}}{{|l|c|}}
             \\hline
             \\rowcolor{{azulSeyep}}
@@ -1728,15 +1907,16 @@ El resto de consideraciones en cuanto a protecciones se dejan plasmados en el an
         \\captionof{{table}}{{Ajustes de protección para el Reconectador \\nombreProyecto.}}
         \\label{{tab:ajustesrecoProyecto}}
         \\begingroup
-        \\setlength{{\\tabcolsep}}{{12pt}}
+        \\adjustbox{{max width=\\textwidth}}{{%
+        \\setlength{{\\tabcolsep}}{{8pt}}
         \\renewcommand{{\\arraystretch}}{{1.3}}
-        \\small
         \\begin{{tabular}}{{|l|c|c|c|}}
             \\hline
             \\rowcolor{{azulSeyep}}
             \\multicolumn{{1}}{{|c|}}{{\\color{{white}}\\textbf{{Parámetro}}}} & \\color{{white}}\\textbf{{Pick Up [Aprim]}} & \\color{{white}}\\textbf{{DIAL [s]}} & \\color{{white}}\\textbf{{Curva}} \\\\ \\hline
             {contenido_filas_reco}
-        \\end{{tabular}}
+        \\end{{tabular}}%
+        }}
         \\endgroup
     \\end{{minipage}}
 \\end{{center}}
@@ -1746,7 +1926,7 @@ El resto de consideraciones en cuanto a protecciones se dejan plasmados en el an
     \\captionof{{table}}{{Resumen ajuste de protecciones sistemáticas para generadores basados en inversores y frecuencia variable de capacidad instalada o nominal > 0,25 MW conectados al SDL}}
     \\label{{tab:resumenajustestotales}}
     \\begingroup
-    \\resizebox{{\\textwidth}}{{!}}{{%
+    \\adjustbox{{max width=\\textwidth}}{{%
         \\renewcommand{{\\arraystretch}}{{1.3}}
         \\begin{{tabular}}{{|c|c|c|}}
             \\hline
@@ -1758,15 +1938,41 @@ El resto de consideraciones en cuanto a protecciones se dejan plasmados en el an
     \\endgroup
 \\end{{table}}
 
-% =====================================================================
+""" if incluir_sec_8 else ""
+    bloque_s8 += generar_latex_secciones_personalizadas("sec_8", params, es_autogenerador)
+
+    bloque_s9 = f"""% =====================================================================
 % SECCIÓN 9: CONCLUSIONES Y SECCIÓN 10: ANEXOS
 % =====================================================================
 \\clearpage
 \\section{{CONCLUSIONES}}
 \\CONCLUSIONES
-{bloque_seccion_anexos}
+""" if incluir_sec_9 else ""
+    bloque_s9 += generar_latex_secciones_personalizadas("sec_9", params, es_autogenerador)
+
+    bloque_s10 = bloque_seccion_anexos if incluir_sec_10 else ""
+    bloque_s10 += generar_latex_secciones_personalizadas("sec_10", params, es_autogenerador)
+
+    bloque_sglobal = generar_latex_secciones_personalizadas("sec_global", params, es_autogenerador)
+
+    cuerpo_documento = (
+        bloque_intro
+        + bloque_s1
+        + bloque_s2
+        + bloque_s3
+        + bloque_s4
+        + bloque_s5
+        + bloque_s6
+        + bloque_s7
+        + bloque_s8
+        + bloque_s9
+        + bloque_s10
+        + bloque_sglobal
+        + f"""
 \\end{{document}}
 """
+    )
+
 
     contenido_latex = (
         generar_preambulo()
@@ -1813,4 +2019,3 @@ El resto de consideraciones en cuanto a protecciones se dejan plasmados en el an
         return False, f"Error en el proceso LaTeX: {str(e)}"
     except Exception as e:
         return False, f"Error inesperado: {str(e)}"
-
