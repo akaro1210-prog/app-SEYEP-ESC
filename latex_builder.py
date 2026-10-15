@@ -673,7 +673,7 @@ def generar_latex_secciones_personalizadas(sec_padre, params, es_autogen):
     return "\n\n".join(bloques)
 
 
-def compilar_estudio_latex(params):
+def generar_codigo_latex(params=None):
     if params is None:
         params = {}
 
@@ -1979,7 +1979,16 @@ El resto de consideraciones en cuanto a protecciones se dejan plasmados en el an
         + comandos_variables
         + cuerpo_documento
     )
+    return contenido_latex
 
+
+def compilar_estudio_latex(params=None):
+    """
+    Genera el código LaTeX completo, escribe el archivo 'Estudio_Conexion.tex'
+    y ejecuta pdflatex para producir 'Estudio_Conexion.pdf'.
+    Retorna una tupla (éxito: bool, ruta_pdf_o_error: str).
+    """
+    contenido_latex = generar_codigo_latex(params)
     tex_filename = "Estudio_Conexion.tex"
     pdf_filename = "Estudio_Conexion.pdf"
 
