@@ -1,9 +1,19 @@
 import streamlit as st
 import pandas as pd
+from secciones_manager import render_control_seccion, render_boton_agregar_seccion
 
-def render():
-    st.subheader("🛡️ Sección 8: Verificación de Protecciones")
-    st.write("Edita las tablas del Sistema AC (`\\sistemaAC`), las protecciones del proyecto/OR y el resumen de ajustes ANSI.")
+def render(config_vars=None):
+    if config_vars is None:
+        config_vars = st.session_state.get("config_vars", {})
+    tipo_estudio = config_vars.get("tipo_estudio", st.session_state.get("tipo_estudio", "GD"))
+    es_autogen = ("autogenerador" in str(tipo_estudio).lower() or bool(config_vars.get("es_autogenerador", False)))
+    tag = "Autogenerador" if es_autogen else "GD"
+
+    st.subheader(f"🛡️ Sección 8: Verificación de Protecciones ({tag})")
+    st.write(f"Edita las tablas del Sistema AC (`\\sistemaAC`), las protecciones del proyecto ({tag}) y resumen de ajustes ANSI.")
+
+    # Control de Sección 8 (Opcional)
+    render_control_seccion("sec_8", f"Sección 8: Verificación de Protecciones ({tag})")
 
     st.markdown("### 8.1 Parámetros del Sistema AC (`\\sistemaAC`)")
     col_ac1, col_ac2, col_ac3 = st.columns(3)
@@ -18,15 +28,15 @@ def render():
         ac_nota_pie = st.text_input("Nota al pie de tabla:", value="*Nota: Valor de protección ajustado a 1360 A.")
 
     st.markdown("---")
-    st.markdown("### 8.2 Tablas de Equipos de Protección")
+    st.markdown(f"### 8.2 Tablas de Equipos de Protección ({tag})")
 
     c_p1, c_p2, c_p3 = st.columns(3)
     with c_p1:
-        st.markdown("**Tabla: Protección GD Proyecto**")
-        gd_protege = st.text_input("Protege (GD):", value="Transformador 1.25MVA")
-        gd_tipo = st.text_input("TIPO (GD):", value="Reconectador")
-        gd_ref = st.text_input("REFERENCIA (GD):", value="ENTEC EPR-1 ETR300-R-600")
-        gd_tctp = st.text_input("TC / TP (GD):", value="Sensores elecrónicos")
+        st.markdown(f"**Tabla: Protección {tag} Proyecto**")
+        gd_protege = st.text_input(f"Protege ({tag}):", value="Transformador 1.25MVA")
+        gd_tipo = st.text_input(f"TIPO ({tag}):", value="Reconectador")
+        gd_ref = st.text_input(f"REFERENCIA ({tag}):", value="ENTEC EPR-1 ETR300-R-600")
+        gd_tctp = st.text_input(f"TC / TP ({tag}):", value="Sensores elecrónicos")
     with c_p2:
         st.markdown("**Tabla: Protección Inversores**")
         inv_protege = st.text_input("Protege (Inversores):", value="TSF - Inversores")
@@ -71,6 +81,9 @@ def render():
         use_container_width=True,
         key="editor_ajustes_sistematicos"
     )
+
+    # Botón para agregar secciones adicionales en Sección 8
+    render_boton_agregar_seccion("sec_8", "Sección 8 (Verificación de Protecciones)")
 
     datos = {
         "ac_fases": ac_fases,
