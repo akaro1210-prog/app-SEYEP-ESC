@@ -65,32 +65,86 @@ SECCIONES_ESTANDAR = {
     },
 }
 
+# Subsecciones individuales que pueden marcarse como opcionales
+SUBSECCIONES_ESTANDAR = {
+    # Sección 1
+    "subsec_1_1": {"sec_padre": "sec_1", "numero": "1.1", "nombre": "Objetivo y alcance"},
+    "subsec_1_2": {"sec_padre": "sec_1", "numero": "1.2", "nombre": "Supuestos y herramienta de modelación"},
+    "subsec_1_3": {"sec_padre": "sec_1", "numero": "1.3", "nombre": "Resumen de los principales resultados"},
+    # Sección 2
+    "subsec_2_1": {"sec_padre": "sec_2", "numero": "2.1", "nombre": "Información del proyecto y coordenadas"},
+    # Sección 3
+    "subsec_3_1": {"sec_padre": "sec_3", "numero": "3.1", "nombre": "Equipos (Paneles e Inversores)"},
+    "subsec_3_2": {"sec_padre": "sec_3", "numero": "3.2", "nombre": "Información del Operador de Red (OR)"},
+    # Sección 4
+    "subsec_4_1": {"sec_padre": "sec_4", "numero": "4.1", "nombre": "Modelo de la zona de influencia (Unifilar)"},
+    "subsec_4_2": {"sec_padre": "sec_4", "numero": "4.2", "nombre": "Horizonte de análisis"},
+    "subsec_4_3": {"sec_padre": "sec_4", "numero": "4.3", "nombre": "Demanda de potencia del circuito"},
+    "subsec_4_4": {"sec_padre": "sec_4", "numero": "4.4", "nombre": "Energía producida vs. Energía demandada"},
+    # Sección 5
+    "subsec_5_1": {"sec_padre": "sec_5", "numero": "5.1", "nombre": "Criterios técnicos normativos"},
+    "subsec_5_2": {"sec_padre": "sec_5", "numero": "5.2", "nombre": "Descripción de los análisis a realizar"},
+    # Sección 6
+    "subsec_6_1": {"sec_padre": "sec_6", "numero": "6.1", "nombre": "Variables y escenarios de demanda/generación"},
+    # Sección 7
+    "subsec_7_1": {"sec_padre": "sec_7", "numero": "7.1", "nombre": "Flujo de carga AC en estado estable"},
+    "subsec_7_2": {"sec_padre": "sec_7", "numero": "7.2", "nombre": "Análisis de contingencia (N-1)"},
+    "subsec_7_3": {"sec_padre": "sec_7", "numero": "7.3", "nombre": "Cálculo de pérdidas en el SDL"},
+    "subsec_7_4": {"sec_padre": "sec_7", "numero": "7.4", "nombre": "Verificación de cortocircuito (IEC 60909)"},
+    "subsec_7_5": {"sec_padre": "sec_7", "numero": "7.5", "nombre": "Calidad de potencia (IEEE 1547)"},
+    "subsec_7_6": {"sec_padre": "sec_7", "numero": "7.6", "nombre": "Análisis para evitar funcionamiento en isla"},
+    # Sección 8
+    "subsec_8_1": {"sec_padre": "sec_8", "numero": "8.1", "nombre": "Parámetros del Sistema AC"},
+    "subsec_8_2": {"sec_padre": "sec_8", "numero": "8.2", "nombre": "Equipos y filosofía de protección"},
+    "subsec_8_3": {"sec_padre": "sec_8", "numero": "8.3", "nombre": "Ajustes de protección del Reconectador"},
+    "subsec_8_4": {"sec_padre": "sec_8", "numero": "8.4", "nombre": "Resumen de protecciones sistemáticas (CNO)"},
+    # Sección 9 y 10
+    "subsec_9_1": {"sec_padre": "sec_9", "numero": "9.1", "nombre": "Concepto técnico y conclusiones"},
+    "subsec_10_1": {"sec_padre": "sec_10", "numero": "10.1", "nombre": "Gráficas de flujos de carga y perfiles"},
+}
+
 def inicializar_estado_secciones():
-    """Garantiza que las estructuras de datos de secciones existan en st.session_state."""
+    """Garantiza que las estructuras de datos de secciones y subsecciones existan en st.session_state."""
     if "secciones_activas" not in st.session_state:
-        # Por defecto todas las 10 secciones están activas
         st.session_state["secciones_activas"] = {
             sec_id: True for sec_id in SECCIONES_ESTANDAR
+        }
+    if "subsecciones_activas" not in st.session_state:
+        st.session_state["subsecciones_activas"] = {
+            sub_id: True for sub_id in SUBSECCIONES_ESTANDAR
         }
     if "secciones_personalizadas" not in st.session_state:
         st.session_state["secciones_personalizadas"] = []
 
 def esta_seccion_activa(sec_id: str) -> bool:
-    """Verifica si una sección estándar está marcada como activa para el informe."""
+    """Verifica si una sección principal está activa."""
     inicializar_estado_secciones()
     cargadas = st.session_state.get("esc_params_cargados", {})
     if isinstance(cargadas, dict) and f"incluir_{sec_id}" in cargadas:
         return bool(cargadas[f"incluir_{sec_id}"])
     return bool(st.session_state["secciones_activas"].get(sec_id, True))
 
+def esta_subseccion_activa(subsec_id: str) -> bool:
+    """Verifica si una subsección específica está activa."""
+    inicializar_estado_secciones()
+    # Si la sección padre está desactivada, la subsección tampoco está activa
+    info_sub = SUBSECCIONES_ESTANDAR.get(subsec_id)
+    if info_sub:
+        sec_padre = info_sub.get("sec_padre")
+        if sec_padre and not esta_seccion_activa(sec_padre):
+            return False
+
+    cargadas = st.session_state.get("esc_params_cargados", {})
+    if isinstance(cargadas, dict) and f"incluir_{subsec_id}" in cargadas:
+        return bool(cargadas[f"incluir_{subsec_id}"])
+    return bool(st.session_state["subsecciones_activas"].get(subsec_id, True))
+
 def render_control_seccion(sec_id: str, titulo: str) -> bool:
     """
-    Renderiza el interruptor para marcar una sección como obligatoria u opcional.
-    Permite omitir secciones existentes si el usuario lo desea.
+    Control principal de sección: permite activarla o quitarla (marcarla como opcional).
     """
     inicializar_estado_secciones()
     ver = obtener_ver()
-    
     val_default = esta_seccion_activa(sec_id)
     key_widget = f"chk_opcional_{sec_id}_{ver}"
     
@@ -123,6 +177,36 @@ def render_control_seccion(sec_id: str, titulo: str) -> bool:
                 "Los números del resto de secciones se ajustarán automáticamente."
             )
     
+    return activa
+
+def render_control_subseccion(subsec_id: str, titulo: str) -> bool:
+    """
+    Control específico de subsección: permite incluir u omitir una subsección individual.
+    """
+    inicializar_estado_secciones()
+    ver = obtener_ver()
+    val_default = esta_subseccion_activa(subsec_id)
+    key_widget = f"chk_subsec_{subsec_id}_{ver}"
+
+    c_s1, c_s2 = st.columns([3.8, 1.2])
+    with c_s1:
+        activa = st.checkbox(
+            f"📌 **Incluir subsección:** {titulo}",
+            value=val_default,
+            key=key_widget,
+            help=f"Desmarca para quitar la subsección '{titulo}' del documento final. La numeración LaTeX se reajustará automáticamente."
+        )
+    with c_s2:
+        if activa:
+            st.caption("✅ Subsección Activa")
+        else:
+            st.caption("⏸️ Opcional Omitida")
+
+    st.session_state["subsecciones_activas"][subsec_id] = activa
+
+    if not activa:
+        st.warning(f"⚠️ *La subsección '{titulo}' está marcada como opcional y NO se incluirá en el informe compilado.*")
+
     return activa
 
 def render_boton_agregar_seccion(sec_padre: str, titulo_padre: str):
@@ -211,7 +295,6 @@ def render_boton_agregar_seccion(sec_padre: str, titulo_padre: str):
                 )
                 sec_cust["contenido"] = nuevo_contenido
                 
-                # Opciones complementarias de tabla o imagen
                 with st.expander("➕ Adjuntar Tabla o Figura opcional a esta sección"):
                     c_tab, c_img = st.columns(2)
                     with c_tab:
@@ -240,42 +323,58 @@ def render_boton_agregar_seccion(sec_padre: str, titulo_padre: str):
             st.rerun()
 
 def obtener_diccionario_secciones():
-    """Retorna el estado completo de secciones para exportar el proyecto o pasarlo a latex_builder."""
+    """Retorna el estado completo de secciones y subsecciones para exportar o compilar."""
     inicializar_estado_secciones()
     res = {}
     for sec_id, activa in st.session_state["secciones_activas"].items():
         res[f"incluir_{sec_id}"] = activa
+    for sub_id, activa in st.session_state["subsecciones_activas"].items():
+        res[f"incluir_{sub_id}"] = activa
     res["secciones_personalizadas"] = list(st.session_state["secciones_personalizadas"])
     return res
 
 def render_resumen_estructura_documento():
-    """Panel global para visualizar y configurar rápidamente toda la estructura de secciones del informe."""
+    """Panel global para visualizar y configurar rápidamente toda la estructura de secciones y subsecciones."""
     inicializar_estado_secciones()
     ver = obtener_ver()
-    with st.expander("📚 Configuración y Gestión de Todas las Secciones del Documento", expanded=False):
+    with st.expander("📚 Configuración y Gestión de Secciones y Subsecciones del Documento", expanded=False):
         st.write(
-            "Aquí puedes activar o desactivar secciones completas de forma opcional, "
-            "o verificar qué secciones adicionales has agregado al informe."
+            "Aquí puedes activar o desactivar tanto **secciones completas** como **subsecciones específicas** "
+            "de forma opcional, o verificar qué secciones adicionales has agregado al informe."
         )
-        c_a1, c_a2 = st.columns(2)
-        items = list(SECCIONES_ESTANDAR.items())
-        mitad = len(items) // 2
-        
-        with c_a1:
-            for sec_id, info in items[:mitad]:
-                act = st.session_state["secciones_activas"].get(sec_id, True)
-                nuevo_act = st.checkbox(
-                    f"Sección {info['numero']}: {info['nombre']}",
-                    value=act,
-                    key=f"chk_master_{sec_id}_{ver}"
+        for sec_id, info in SECCIONES_ESTANDAR.items():
+            act_sec = st.session_state["secciones_activas"].get(sec_id, True)
+            c1, c2 = st.columns([3.5, 1])
+            with c1:
+                nuevo_act_sec = st.checkbox(
+                    f"**Sección {info['numero']}: {info['nombre']}**",
+                    value=act_sec,
+                    key=f"chk_m_sec_{sec_id}_{ver}"
                 )
-                st.session_state["secciones_activas"][sec_id] = nuevo_act
-        with c_a2:
-            for sec_id, info in items[mitad:]:
-                act = st.session_state["secciones_activas"].get(sec_id, True)
-                nuevo_act = st.checkbox(
-                    f"Sección {info['numero']}: {info['nombre']}",
-                    value=act,
-                    key=f"chk_master_{sec_id}_{ver}"
-                )
-                st.session_state["secciones_activas"][sec_id] = nuevo_act
+                st.session_state["secciones_activas"][sec_id] = nuevo_act_sec
+            with c2:
+                st.caption("✅ Activa" if nuevo_act_sec else "⏸️ Omitida")
+
+            # Mostrar las subsecciones de esta sección
+            subs_de_sec = [
+                (sid, sinfo) for sid, sinfo in SUBSECCIONES_ESTANDAR.items()
+                if sinfo.get("sec_padre") == sec_id
+            ]
+            if subs_de_sec:
+                with st.container():
+                    st.markdown("<div style='margin-left: 24px; padding-left: 8px; border-left: 2px solid #334155;'>", unsafe_allow_html=True)
+                    for sub_id, sinfo in subs_de_sec:
+                        act_sub = st.session_state["subsecciones_activas"].get(sub_id, True) and nuevo_act_sec
+                        c_s1, c_s2 = st.columns([3.5, 1])
+                        with c_s1:
+                            nuevo_act_sub = st.checkbox(
+                                f"Subsección {sinfo['numero']}: {sinfo['nombre']}",
+                                value=act_sub,
+                                disabled=not nuevo_act_sec,
+                                key=f"chk_m_sub_{sub_id}_{ver}"
+                            )
+                            st.session_state["subsecciones_activas"][sub_id] = nuevo_act_sub
+                        with c_s2:
+                            st.caption("Subsección Activa" if nuevo_act_sub else "Omitida")
+                    st.markdown("</div>", unsafe_allow_html=True)
+            st.markdown("<hr style='margin: 8px 0; border: none; border-top: 1px solid #1e293b;'>", unsafe_allow_html=True)
