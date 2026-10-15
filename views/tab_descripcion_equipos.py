@@ -1,5 +1,6 @@
 import streamlit as st
 import os
+from secciones_manager import render_control_seccion, render_boton_agregar_seccion
 
 def guardar_archivo_subido(uploaded_file, nombre_destino):
     """Guarda un archivo subido en la raíz del proyecto para que pdflatex lo encuentre."""
@@ -9,15 +10,28 @@ def guardar_archivo_subido(uploaded_file, nombre_destino):
         return True
     return False
 
-def render():
-    st.subheader("🏗️ Secciones 2 y 3: Descripción del Proyecto, Equipos e Insumos OR")
-    st.write("Configura los textos, tablas de equipos, inversores, hojas técnicas e insumos del Operador de Red.")
+def render(config_vars=None):
+    if config_vars is None:
+        config_vars = st.session_state.get("config_vars", {})
+    tipo_estudio = config_vars.get("tipo_estudio", st.session_state.get("tipo_estudio", "GD"))
+    es_autogen = ("autogenerador" in str(tipo_estudio).lower() or bool(config_vars.get("es_autogenerador", False)))
+    tag = "Autogenerador" if es_autogen else "GD"
+    tag_regimen = "Autogeneración" if es_autogen else "GD"
 
-    st.markdown("### 2.1 Información del proyecto")
+    st.subheader(f"🏗️ Secciones 2 y 3: Descripción del Proyecto, Equipos e Insumos OR ({tag})")
+    st.write(
+        f"Configura los textos, tablas de equipos, inversores, hojas técnicas e insumos del Operador de Red "
+        f"para el régimen de **{tag}**."
+    )
+
+    # Control de Sección 2 (Opcional)
+    render_control_seccion("sec_2", f"Sección 2: Descripción General del Proyecto ({tag})")
+
+    st.markdown(f"### 2.1 Información del proyecto ({tag})")
     default_sec2_intro = (
-        r"El proyecto \nombreProyecto\ de GD \capacidadMW, se conectará al SIN a través del circuito \CTO\ "
+        rf"El proyecto \nombreProyecto\ de {tag_regimen} \capacidadMW, se conectará al SIN a través del circuito \CTO\ "
         r"de la S/E \SSEE\ al nivel de tensión \NT, propiedad del operador de red \OR, La ubicación del proyecto es \ubicacion. "
-        r"En la \cref{tab:coordenadas} se detallan las coordenadas geográficas para la ubicación del proyecto GD \nombreProyecto. "
+        rf"En la \cref{{tab:coordenadas}} se detallan las coordenadas geográficas para la ubicación del proyecto {tag} \nombreProyecto. "
         r"El proyecto cuenta con una fecha en puesta de operación (en adelante FPO) para \FechaEntrada. "
         r"En la \cref{tab:descripcion_proyecto} se resumen las especificaciones técnicas de los equipos que conforman el proyecto."
     )
@@ -76,7 +90,13 @@ def render():
             if guardar_archivo_subido(up_geo, "Diagrama Geoespacial.png"):
                 st.success("✅ Diagrama Geoespacial.png guardada.")
 
+    # Botón para agregar secciones adicionales en Sección 2
+    render_boton_agregar_seccion("sec_2", "Sección 2 (Descripción General del Proyecto)")
+
     st.markdown("---")
+    # Control de Sección 3 (Opcional)
+    render_control_seccion("sec_3", f"Sección 3: Parámetros Eléctricos de los Equipos ({tag})")
+
     st.markdown("### 3.1 Equipos (`\\equipos` y `\\figinversores`)")
     default_sec3_intro = (
         r"En la \cref{fig:fichapanel}, se puede apreciar las características técnicas de los paneles fotovoltaicos seleccionados para el proyecto."
@@ -102,10 +122,9 @@ def render():
             if guardar_archivo_subido(up_finv, nombre_ficha):
                 st.success(f"✅ {nombre_ficha} guardada.")
 
-    st.markdown("---")
-    st.markdown("### 3.2 Información OR (`\\informacionOR`)")
+    st.markdown(f"### 3.2 Información OR ({tag})")
     default_sec3_or_texto = (
-        r"El proyecto GD \nombreProyecto\ se conectará al circuito \CTO\, por tanto, el OR suministro a través de los insumos "
+        rf"El proyecto {tag} \nombreProyecto\ se conectará al circuito \CTO\, por tanto, el OR suministro a través de los insumos "
         r"datos de red de todo el circuito y ajuste de coordinación de protecciones."
     )
     sec3_or_texto = st.text_area("Párrafo introductorio Sección 3.2 (Información OR):", value=default_sec3_or_texto, height=80)
@@ -154,4 +173,7 @@ def render():
         "usar_equivalente_png": modo_equivalente.startswith("Imagen")
     }
     st.session_state["datos_sec_2_3"] = datos
+    # Botón para agregar secciones adicionales en Sección 3
+    render_boton_agregar_seccion("sec_3", "Sección 3 (Parámetros Eléctricos de los Equipos)")
+
     return datos
