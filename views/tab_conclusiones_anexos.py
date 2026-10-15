@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import os
-from secciones_manager import render_control_seccion, render_boton_agregar_seccion
+from secciones_manager import render_control_seccion, render_control_subseccion, render_boton_agregar_seccion
 
 def guardar_archivo_subido(uploaded_file, nombre_destino):
     """Guarda la imagen subida con el nombre exacto esperado por LaTeX (convirtiendo a PNG válido)."""
@@ -26,7 +26,6 @@ def render(config_vars=None):
     tipo_estudio = config_vars.get("tipo_estudio", st.session_state.get("tipo_estudio", "GD"))
     es_autogen = ("autogenerador" in str(tipo_estudio).lower() or bool(config_vars.get("es_autogenerador", False)))
     tag = "Autogenerador" if es_autogen else "GD"
-
     year_ini = str(config_vars.get("YearInicial", config_vars.get("year_inicial", "2027"))).strip() or "2027"
     year_fin = str(config_vars.get("YearFinal", config_vars.get("year_final", "2032"))).strip() or "2032"
 
@@ -38,6 +37,7 @@ def render(config_vars=None):
 
     # Control de Sección 9 (Opcional)
     render_control_seccion("sec_9", f"Sección 9: Conclusiones ({tag})")
+    render_control_subseccion("subsec_9_1", f"Subsección 9.1: Concepto técnico y conclusiones ({tag})")
 
     st.markdown(f"### 9. Conclusiones ({tag}) (`\\CONCLUSIONES`)")
     st.caption("Puedes agregar, editar o eliminar filas. Cada fila se convertirá en un `\\item` dentro de la sección de Conclusiones.")
@@ -65,6 +65,7 @@ def render(config_vars=None):
     st.markdown("---")
     # Control de Sección 10 (Opcional)
     render_control_seccion("sec_10", "Sección 10: Anexos (Flujos de Carga y Gráficas)")
+    render_control_subseccion("subsec_10_1", "Subsección 10.1: Gráficas de flujos de carga y perfiles de tensión")
 
     st.markdown("### 10. Anexos: Gráficas de Perfiles y Flujos de Carga (`\\Flujosdecarga`)")
 
