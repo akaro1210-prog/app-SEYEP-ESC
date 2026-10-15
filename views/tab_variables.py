@@ -1,59 +1,84 @@
 import streamlit as st
 
-def crear_fila_variable(key_name, label_text, default_val):
-    cols = st.columns([0.08, 0.42, 0.5])
-    with cols[0]:
-        activo = st.checkbox("Usar", value=True, key=f"chk_{key_name}")
-    with cols[1]:
-        st.markdown(f"**`\\{key_name}`**")
-        st.caption(label_text)
-    with cols[2]:
-        valor = st.text_input("Valor", value=default_val, key=f"val_{key_name}", label_visibility="collapsed")
-    return activo, valor
+def cambiar_tipo_informe():
+    nuevo_tipo = st.session_state.tipo_selector
+    st.session_state.tipo_informe = nuevo_tipo
+    
+    # REQUISITO 1: Actualizar dinámicamente el contenido del informe según la elección
+    from app import inicializar_secciones
+    st.session_state.secciones = inicializar_secciones(nuevo_tipo)
+    
+    # Ajustar variables según régimen
+    if nuevo_tipo == "GD":
+        st.session_state.variables["demanda_interna_kw"] = 0.0
+        st.session_state.variables["limite_export_kw"] = st.session_state.variables.get("capacidad_ac_kw", 990.0)
+    else:
+        st.session_state.variables["demanda_interna_kw"] = 350.0
+        st.session_state.variables["limite_export_kw"] = 250.0
 
 def render():
-    st.subheader("Listado Maestro de Variables del Proyecto (`\\newcommand`)")
-    st.write("Selecciona cuáles comandos deseas incluir y edita sus valores respectivos:")
+    st.subheader("1. Selección del Tipo de Informe (Régimen CREG 174)")
+    st.write(
+        "Seleccione si el informe técnico es para un **Generador Distribuido (GD)** "
+        "o un **Autogenerador**. Al cambiar la opción, el informe actualizará automáticamente "
+        "todos sus textos, normativas y supuestos técnicos."
+    )
+
+    # REQUISITO 1: Botón selector de GD vs Autogenerador
+    col1, col2 = st.columns([1, 2])
+    with col1:
+        st.radio(
+            "Tipo de Proyecto:",
+            options=["GD", "Autogenerador"],
+            index=0 if st.session_state.tipo_informe == "GD" else 1,
+            key="tipo_selector",
+            on_change=cambiar_tipo_informe,
+            horizontal=True
+        )
+
+    with col2:
+        if st.session_state.tipo_informe == "GD":
+            st.info("⚡ **GD (Generación Distribuida):** Inyección 100% a la red del OR. Demanda interna = 0 kW. Aplica CREG 174 Art. 4.")
+        else:
+            st.success("🏭 **Autogenerador (AGPE):** Con autoconsumo interno y eventual entrega de excedentes. Aplica CREG 174 Art. 10/11.")
+
     st.markdown("---")
+    st.subheader("2. Parámetros Generales del Proyecto")
+    
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        st.session_state.variables["nombre_proyecto"] = st.text_input(
+            "Nombre del Proyecto", 
+            value=st.session_state.variables.get("nombre_proyecto", "Parque Solar Sol del Llano")
+        )
+        st.session_state.variables["codigo_esc"] = st.text_input(
+            "Código de Radicación ESC", 
+            value=st.session_state.variables.get("codigo_esc", "ESC-2025-001")
+        )
 
-    config_vars = {}
+    with c2:
+        st.session_state.variables["capacidad_ac_kw"] = st.number_input(
+            "Capacidad Nominal AC (kW)", 
+            value=float(st.session_state.variables.get("capacidad_ac_kw", 990.0)),
+            step=10.0
+        )
+        st.session_state.variables["tension_kv"] = st.number_input(
+            "Tensión en PCC (kV)", 
+            value=float(st.session_state.variables.get("tension_kv", 13.2)),
+            step=0.1
+        )
 
-    _, config_vars["mesentregaiformemasyear"] = crear_fila_variable("mesentregaiformemasyear", "Mes y año entrega del informe", "Septiembre, 2026")
-    _, config_vars["nombreProyecto"] = crear_fila_variable("nombreProyecto", "Nombre del proyecto", "Arboreo")
-    _, config_vars["capacidadMW"] = crear_fila_variable("capacidadMW", "Capacidad del proyecto", "900kW")
-    _, config_vars["OR"] = crear_fila_variable("OR", "Nombre del OR", "EPM")
-    _, config_vars["FechaEntrada"] = crear_fila_variable("FechaEntrada", "Fecha entrada en operación", "marzo del 2027")
-    _, config_vars["Latitud"] = crear_fila_variable("Latitud", "Latitud", "5°53'49.8\"N")
-    _, config_vars["Longitud"] = crear_fila_variable("Longitud", "Longitud", "74°45'12.9\"W")
-    _, config_vars["YearInicial"] = crear_fila_variable("YearInicial", "Año inicial de estudio", "2027")
-    _, config_vars["YearFinal"] = crear_fila_variable("YearFinal", "Año final de estudio", "2032")
-    _, config_vars["CTO"] = crear_fila_variable("CTO", "Circuito de conexión", "211-11")
-    _, config_vars["SSEE"] = crear_fila_variable("SSEE", "Subestación", "Doradal\\_13.2")
-    _, config_vars["NT"] = crear_fila_variable("NT", "Nivel de tensión", "13.2 kV")
-    _, config_vars["nodo"] = crear_fila_variable("nodo", "Nodo de conexión", "906750")
-    _, config_vars["elementoProteccion"] = crear_fila_variable("elementoProteccion", "Elemento de protección", "211-11")
-    _, config_vars["referenciaPanel"] = crear_fila_variable("referenciaPanel", "Referencia paneles", "JAM66D45 625 LB")
-    _, config_vars["potenciaPanel"] = crear_fila_variable("potenciaPanel", "Potencia paneles", "625 Wp")
-    _, config_vars["cantidadPanel"] = crear_fila_variable("cantidadPanel", "Cantidad paneles", "1760")
-    _, config_vars["ubicacion"] = crear_fila_variable("ubicacion", "Ubicación del proyecto", "En predio del hotel Arboreo, Doradal, Antioquia")
-    _, config_vars["CP"] = crear_fila_variable("CP", "Hora Carga Pura", "-----")
-    _, config_vars["Dmi"] = crear_fila_variable("Dmi", "Hora demanda mínima", "-----")
-    _, config_vars["DMx"] = crear_fila_variable("DMx", "Hora demanda máxima", "-----")
-    _, config_vars["escenariomaxPerdidas"] = crear_fila_variable("escenariomaxPerdidas", "Escenario pérdidas más altas", "-----")
-    _, config_vars["perdidasmaximas"] = crear_fila_variable("perdidasmaximas", "Pérdidas más altas del circuito", "----- kW")
-    _, config_vars["refInversoruno"] = crear_fila_variable("refInversoruno", "Referencia inversor 1", "Inversor 150 kW On-Grid.")
-    _, config_vars["refInversordos"] = crear_fila_variable("refInversordos", "Referencia inversor 2", "Inversor XX kW On-Grid.")
-    _, config_vars["refInversortres"] = crear_fila_variable("refInversortres", "Referencia inversor 3", "Inversor XX kW On-Grid.")
-    _, config_vars["Inversoruno"] = crear_fila_variable("Inversoruno", "Inversor 1", "Growat MAX 150KTL3-X2MV")
-    _, config_vars["Inversordos"] = crear_fila_variable("Inversordos", "Inversor 2", "Huawei Sun2000 50KTL-M3")
-    _, config_vars["Inversortres"] = crear_fila_variable("Inversortres", "Inversor 3", "Huawei Sun2000 40KTL-M3")
-    _, config_vars["cantidadInversoruno"] = crear_fila_variable("cantidadInversoruno", "Cantidad inversor 1", "6 Und.")
-    _, config_vars["cantidadInversordos"] = crear_fila_variable("cantidadInversordos", "Cantidad inversor 2", "1 Und.")
-    _, config_vars["cantidadInversortres"] = crear_fila_variable("cantidadInversortres", "Cantidad inversor 3", "1 Und.")
-    _, config_vars["generacionaprobada"] = crear_fila_variable("generacionaprobada", "Generación ya aprobada en la SE", "900kW")
-    _, config_vars["potenciaminima"] = crear_fila_variable("potenciaminima", "Demanda mínima del circuito", "90 kW")
-    _, config_vars["recoCTO"] = crear_fila_variable("recoCTO", "Protección del OR aguas arriba", "211-11")
-    _, config_vars["tipoproteccion"] = crear_fila_variable("tipoproteccion", "Tipo de elemento que protege", "Reconectador")
-    _, config_vars["recocabecera"] = crear_fila_variable("recocabecera", "Protección del OR cabecera", "")
-
-    return config_vars
+    with c3:
+        # Demanda interna bloqueada para GD, editable para Autogenerador
+        es_gd = st.session_state.tipo_informe == "GD"
+        st.session_state.variables["demanda_interna_kw"] = st.number_input(
+            "Demanda Interna / Autoconsumo (kW)",
+            value=float(st.session_state.variables.get("demanda_interna_kw", 0.0)),
+            disabled=es_gd,
+            help="En GD la demanda interna en el nodo es 0 kW." if es_gd else "Demanda de carga propia de la instalación."
+        )
+        st.session_state.variables["limite_export_kw"] = st.number_input(
+            "Límite de Exportación (kW)", 
+            value=float(st.session_state.variables.get("limite_export_kw", 990.0)),
+            step=10.0
+        )
