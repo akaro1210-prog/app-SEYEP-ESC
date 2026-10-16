@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import os
-from secciones_manager import render_control_seccion, render_control_subseccion, render_boton_agregar_seccion
+from secciones_manager import render_control_seccion, render_boton_agregar_seccion
 
 def guardar_archivo_subido(uploaded_file, nombre_destino):
     """Guarda la imagen subida con el nombre exacto esperado por LaTeX (convirtiendo a PNG válido)."""
@@ -35,13 +35,11 @@ def render(config_vars=None):
         f"para el régimen de **{tag}**."
     )
 
-    # Control de Sección 9 (Opcional)
+    # Control de Sección 9 y su Subsección 9.1 (Opcional)
     render_control_seccion("sec_9", f"Sección 9: Conclusiones ({tag})")
-    render_control_subseccion("subsec_9_1", f"Subsección 9.1: Concepto técnico y conclusiones ({tag})")
 
     st.markdown(f"### 9. Conclusiones ({tag}) (`\\CONCLUSIONES`)")
     st.caption("Puedes agregar, editar o eliminar filas. Cada fila se convertirá en un `\\item` dentro de la sección de Conclusiones.")
-
     conclusiones_default = pd.DataFrame([
         {"Conclusión": r"Los equipos empleados en el proyecto (Paneles Solares, Protecciones) cumplen con la certificación de conformidad RETIE."},
         {"Conclusión": rf"Las simulaciones de flujo en estado estable con {tag} se evidencian tensiones que se mantienen en los valores establecidos."},
@@ -51,7 +49,6 @@ def render(config_vars=None):
         {"Conclusión": r"Los inversores cumplen con las normas de equivalencia internacionales como lo son la IEEE1547 y la UL 1741 para la integración a la red. Su nivel de distorsión armónica de corriente según ficha técnica es <3\%."},
         {"Conclusión": r"El Sistema propuesto de 900 kWac no afecta de manera significativa la red de distribución y la potencia inyectada de los excedentes será consumida por la red."}
     ])
-
     df_conclusiones = st.data_editor(
         conclusiones_default,
         num_rows="dynamic",
@@ -63,9 +60,8 @@ def render(config_vars=None):
     render_boton_agregar_seccion("sec_9", "Sección 9 (Conclusiones)")
 
     st.markdown("---")
-    # Control de Sección 10 (Opcional)
+    # Control de Sección 10 y su Subsección 10.1 (Opcional)
     render_control_seccion("sec_10", "Sección 10: Anexos (Flujos de Carga y Gráficas)")
-    render_control_subseccion("subsec_10_1", "Subsección 10.1: Gráficas de flujos de carga y perfiles de tensión")
 
     st.markdown("### 10. Anexos: Gráficas de Perfiles y Flujos de Carga (`\\Flujosdecarga`)")
 
