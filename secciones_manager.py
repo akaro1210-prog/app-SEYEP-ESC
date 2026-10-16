@@ -378,3 +378,4 @@ def render_resumen_estructura_documento():
                             st.caption("Subsección Activa" if nuevo_act_sub else "Omitida")
                     st.markdown("</div>", unsafe_allow_html=True)
             st.markdown("<hr style='margin: 8px 0; border: none; border-top: 1px solid #1e293b;'>", unsafe_allow_html=True)
+
