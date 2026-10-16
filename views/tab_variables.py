@@ -78,6 +78,12 @@ def render():
             value=obtener_val("FechaEntrada", "marzo del 2027"),
             key=f"esc_v_fent_{ver}"
         )
+        norma_cno = st.text_input(
+            "Versión Acuerdo CNO (\\normaCNO):",
+            value=obtener_val("normaCNO", "2233"),
+            key=f"esc_v_norma_cno_{ver}",
+            help="Número del Acuerdo CNO aplicable al estudio (por defecto 2233). Si se modifica por una norma futura, se actualizará automáticamente en todo el documento."
+        )
 
     with col2:
         cto = st.text_input(
@@ -178,6 +184,7 @@ def render():
         "Inversoruno": inversor_uno,
         "cantidadInversoruno": cantidad_inversor_uno,
         "generacionaprobada": generacion_aprobada,
+        "normaCNO": norma_cno,
     }
 
     st.markdown("---")
@@ -186,4 +193,5 @@ def render():
     st.session_state["config_vars"] = config_vars
     st.session_state["tipo_estudio"] = tipo_estudio_clave
     st.session_state["es_autogenerador"] = es_autogenerador
+    st.session_state["normaCNO"] = norma_cno
     return config_vars

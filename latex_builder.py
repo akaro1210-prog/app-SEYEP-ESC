@@ -716,6 +716,7 @@ def generar_codigo_latex(params=None):
 
     # 0. Determinación del régimen: Generación Distribuida (GD) vs Autogenerador
     tipo_estudio_raw = str(buscar_param(params, ["tipo_estudio", "tipoEstudio", "regimen"], "GD"))
+    norma_cno = escapar_latex(buscar_param(params, ["normaCNO", "norma_cno"], "2233"))
     es_autogenerador = ("autogenerador" in tipo_estudio_raw.lower() or bool(params.get("es_autogenerador", False)))
 
     sigla_proyecto = "Autogenerador" if es_autogenerador else "GD"
@@ -900,13 +901,13 @@ def generar_codigo_latex(params=None):
     if incluir_geoespacial:
         img_geo = incluir_imagen_segura("Diagrama Geoespacial.png", "width=10cm")
         bloque_geoespacial = rf"""
-En la \\cref{{fig:georeferencia}}, se presenta el diagrama eléctrico geoespacial del circuito \\CTO\\ en el cual se conecta el proyecto.\\\\
-\\begin{{figure}}[htbp]
-    \\centering
+En la \cref{{fig:georeferencia}}, se presenta el diagrama eléctrico geoespacial del circuito \CTO\\ en el cual se conecta el proyecto.\\
+\begin{{figure}}[htbp]
+    \centering
     {img_geo}
-    \\caption{{Diagrama eléctrico geoespacial CTO \\CTO}}
-    \\label{{fig:georeferencia}}
-\\end{{figure}}
+    \caption{{Diagrama eléctrico geoespacial CTO \CTO}}
+    \label{{fig:georeferencia}}
+\end{{figure}}
 """
     img_ubicacion = incluir_imagen_segura("Ubicacion Geográfica.png", "width=15cm")
 
@@ -927,12 +928,12 @@ En la \\cref{{fig:georeferencia}}, se presenta el diagrama eléctrico geoespacia
     if usar_equivalente_png:
         img_eq_red = incluir_imagen_segura("equivalentered.png", "height=0.23\\textheight, keepaspectratio")
         bloque_eq_red = rf"""
-\\begin{{table}}[htbp]
-    \\centering
-    \\caption{{Parámetros Equivalente de RED}}
-    \\label{{tab:equivalentered}}
+\begin{{table}}[htbp]
+    \centering
+    \caption{{Parámetros Equivalente de RED}}
+    \label{{tab:equivalentered}}
     {img_eq_red}
-\\end{{table}}
+\end{{table}}
 """
     else:
         bloque_eq_red = incluir_csv_seguro(
@@ -955,7 +956,7 @@ En la \\cref{{fig:georeferencia}}, se presenta el diagrama eléctrico geoespacia
         f"cargascto{year_final}.csv"
     )
 
-    bloque_informacion_or = rf"""\\cref{{tab:equivalentered,tab:cargascto{year_inicial},tab:cargascto{year_final}}}
+    bloque_informacion_or = rf"""\cref{{tab:equivalentered,tab:cargascto{year_inicial},tab:cargascto{year_final}}}
 {bloque_eq_red}
 {csv_cargas_ini}
 {csv_cargas_fin}
@@ -1058,34 +1059,34 @@ En la \\cref{{fig:georeferencia}}, se presenta el diagrama eléctrico geoespacia
 
     if incluir_contingencia:
         bloque_contingencia = rf"""
-\\subsection{{\\textit{{Análisis de contingencia}}}}
-{contingencia_p1}\\\\
-\\leavevmode\\\\
-En la \\cref{{tab:cargabilidadMax,tab:PUMax_conting}} se presenta los valores maximos alcanzados en el analisis de cargabilidad y perfiles de tensión.
+\subsection{{\textit{{Análisis de contingencia}}}}
+{contingencia_p1}
 
-\\begin{{table}}[h!]
-    \\centering
-    \\caption{{Cargabilidad Maxima En Contingencia \\YearInicial\\ para el \\CTO}}
-    \\label{{tab:cargabilidadMax}}
+En la \cref{{tab:cargabilidadMax,tab:PUMax_conting}} se presenta los valores maximos alcanzados en el analisis de cargabilidad y perfiles de tensión.
+
+\begin{{table}}[h!]
+    \centering
+    \caption{{Cargabilidad Maxima En Contingencia \YearInicial\\ para el \CTO}}
+    \label{{tab:cargabilidadMax}}
     {img_cont_cargmax}
-\\end{{table}}
+\end{{table}}
 
-\\begin{{table}}[h!]
-    \\centering
-    \\caption{{Perfil De Tension Maxima En Contingencia \\YearInicial\\ para el \\CTO}}
-    \\label{{tab:PUMax_conting}}
+\begin{{table}}[h!]
+    \centering
+    \caption{{Perfil De Tension Maxima En Contingencia \YearInicial\\ para el \CTO}}
+    \label{{tab:PUMax_conting}}
     {img_pumax}
-\\end{{table}}
+\end{{table}}
 
-\\newpage
+\newpage
 {contingencia_p2}
 
-\\begin{{figure}}[h]
-    \\centering
+\begin{{figure}}[h]
+    \centering
     {img_diag_cont}
-    \\caption{{Diagrama Contingencia \\YearInicial}}
-    \\label{{fig:cargabilidadConti}}
-\\end{{figure}}
+    \caption{{Diagrama Contingencia \YearInicial}}
+    \label{{fig:cargabilidadConti}}
+\end{{figure}}
 """
     else:
         bloque_contingencia = ""
@@ -1102,7 +1103,7 @@ En la \\cref{{tab:cargabilidadMax,tab:PUMax_conting}} se presenta los valores ma
     img_cortos = incluir_imagen_segura("cortos.png", "width=1.075\\linewidth")
     sec7_isla_conclusion = params.get(
         "sec7_isla_conclusion",
-        r"La Ecuación \eqref{eq:balance_potencia} arroja un resultado donde la potencia instalada acumulada más la capacidad del proyecto supera la demanda mínima del circuito, confirmando la existencia de riesgo de funcionamiento en isla no intencional ante contingencias o aperturas del elemento de maniobra del Operador de Red. Para mitigar este riesgo y garantizar la seguridad de la red y del personal, la planta implementará un esquema de protección anti-isla activo y coordinado conforme a las disposiciones normativas del Acuerdo CNO 2233 de 2026; los detalles de la filosofía de operación, la parametrización de las funciones intrínsecas del inversor, las funciones de respaldo y la coordinación de tiempos de despeje para evitar la operación en isla se presentan de manera detallada en el Estudio de Ajuste de Protecciones (EACP) entregado adjunto al presente estudio de conexión."
+        r"La Ecuación \eqref{eq:balance_potencia} arroja un resultado donde la potencia instalada acumulada más la capacidad del proyecto supera la demanda mínima del circuito, confirmando la existencia de riesgo de funcionamiento en isla no intencional ante contingencias o aperturas del elemento de maniobra del Operador de Red. Para mitigar este riesgo y garantizar la seguridad de la red y del personal, la planta implementará un esquema de protección anti-isla activo y coordinado conforme a las disposiciones normativas del Acuerdo CNO \normaCNO{}; los detalles de la filosofía de operación, la parametrización de las funciones intrínsecas del inversor, las funciones de respaldo y la coordinación de tiempos de despeje para evitar la operación en isla se presentan de manera detallada en el Estudio de Ajuste de Protecciones (EACP) entregado adjunto al presente estudio de conexión."
     )
 
     # 7. Datos Sección 8 (Protecciones)
@@ -1284,8 +1285,8 @@ En la \\cref{{tab:cargabilidadMax,tab:PUMax_conting}} se presenta los valores ma
     codigo_flujos_carga = "\n".join(bloques_anexos)
     if incluir_anexos and codigo_flujos_carga.strip():
         bloque_seccion_anexos = rf"""
-\\clearpage
-\\section{{ANEXOS}}
+\clearpage
+\section{{ANEXOS}}
 {codigo_flujos_carga}
 """
     else:
@@ -1299,7 +1300,7 @@ En la \\cref{{tab:cargabilidadMax,tab:PUMax_conting}} se presenta los valores ma
         "elementoProteccion", "referenciaPanel", "potenciaPanel", "cantidadPanel", "ubicacion",
         "CP", "Dmi", "DMx", "escenariomaxPerdidas", "perdidasmaximas", "refInversoruno",
         "Inversoruno", "cantidadInversoruno", "generacionaprobada", "potenciaminima",
-        "recoCTO", "tipoproteccion", "recocabecera"
+        "recoCTO", "tipoproteccion", "recocabecera", "normaCNO", "norma_cno", "norma_CNO"
     }
     for k, v in params.items():
         if k not in llaves_reservadas and isinstance(k, str) and k.isalpha() and k.isascii():
@@ -1310,106 +1311,107 @@ En la \\cref{{tab:cargabilidadMax,tab:PUMax_conting}} se presenta los valores ma
 
     comandos_variables = rf"""
 % ---------- Variables del proyecto ----------
-\\providecommand{{\\mesentregainformemasyear}}{{{mes_entrega}}}
-\\providecommand{{\\nombreProyecto}}{{{nombre_proyecto}}}
-\\providecommand{{\\capacidadMW}}{{{capacidad_mw}}}
-\\providecommand{{\\OR}}{{{operador_red}}}
-\\providecommand{{\\FechaEntrada}}{{{fecha_entrada}}}
-\\providecommand{{\\Latitud}}{{{latitud}}}
-\\providecommand{{\\Longitud}}{{{longitud}}}
-\\providecommand{{\\YearInicial}}{{{year_inicial}}}
-\\providecommand{{\\YearFinal}}{{{year_final}}}
-\\providecommand{{\\CTO}}{{{cto}}}
-\\providecommand{{\\SSEE}}{{{ssee}}}
-\\providecommand{{\\NT}}{{{nt}}}
-\\providecommand{{\\nodo}}{{{nodo}}}
-\\providecommand{{\\elementoProteccion}}{{{elemento_proteccion}}}
-\\providecommand{{\\referenciaPanel}}{{{referencia_panel}}}
-\\providecommand{{\\potenciaPanel}}{{{potencia_panel}}}
-\\providecommand{{\\cantidadPanel}}{{{cantidad_panel}}}
-\\providecommand{{\\ubicacion}}{{{ubicacion}}}
-\\providecommand{{\\CP}}{{{cp_hora}}}
-\\providecommand{{\\Dmi}}{{{dmi_hora}}}
-\\providecommand{{\\DMx}}{{{dmx_hora}}}
-\\providecommand{{\\escenariomaxPerdidas}}{{{escenario_max_perd}}}
-\\providecommand{{\\perdidasmaximas}}{{{perdidas_maximas}}}
-\\providecommand{{\\refInversoruno}}{{{ref_inv_1}}}
-\\providecommand{{\\Inversoruno}}{{{mod_inv_1}}}
-\\providecommand{{\\cantidadInversoruno}}{{{cant_inv_1}}}
-\\providecommand{{\\generacionaprobada}}{{{generacion_aprobada}}}
-\\providecommand{{\\potenciaminima}}{{{potencia_minima}}}
-\\providecommand{{\\recoCTO}}{{{reco_cto}}}
-\\providecommand{{\\tipoproteccion}}{{{tipo_proteccion}}}
-\\providecommand{{\\recocabecera}}{{{reco_cabecera}}}
+\providecommand{{\mesentregainformemasyear}}{{{mes_entrega}}}
+\providecommand{{\nombreProyecto}}{{{nombre_proyecto}}}
+\providecommand{{\capacidadMW}}{{{capacidad_mw}}}
+\providecommand{{\OR}}{{{operador_red}}}
+\providecommand{{\FechaEntrada}}{{{fecha_entrada}}}
+\providecommand{{\Latitud}}{{{latitud}}}
+\providecommand{{\Longitud}}{{{longitud}}}
+\providecommand{{\YearInicial}}{{{year_inicial}}}
+\providecommand{{\YearFinal}}{{{year_final}}}
+\providecommand{{\CTO}}{{{cto}}}
+\providecommand{{\SSEE}}{{{ssee}}}
+\providecommand{{\NT}}{{{nt}}}
+\providecommand{{\nodo}}{{{nodo}}}
+\providecommand{{\elementoProteccion}}{{{elemento_proteccion}}}
+\providecommand{{\referenciaPanel}}{{{referencia_panel}}}
+\providecommand{{\potenciaPanel}}{{{potencia_panel}}}
+\providecommand{{\cantidadPanel}}{{{cantidad_panel}}}
+\providecommand{{\ubicacion}}{{{ubicacion}}}
+\providecommand{{\CP}}{{{cp_hora}}}
+\providecommand{{\Dmi}}{{{dmi_hora}}}
+\providecommand{{\DMx}}{{{dmx_hora}}}
+\providecommand{{\escenariomaxPerdidas}}{{{escenario_max_perd}}}
+\providecommand{{\perdidasmaximas}}{{{perdidas_maximas}}}
+\providecommand{{\refInversoruno}}{{{ref_inv_1}}}
+\providecommand{{\Inversoruno}}{{{mod_inv_1}}}
+\providecommand{{\cantidadInversoruno}}{{{cant_inv_1}}}
+\providecommand{{\generacionaprobada}}{{{generacion_aprobada}}}
+\providecommand{{\potenciaminima}}{{{potencia_minima}}}
+\providecommand{{\recoCTO}}{{{reco_cto}}}
+\providecommand{{\tipoproteccion}}{{{tipo_proteccion}}}
+\providecommand{{\normaCNO}}{{{norma_cno}}}
+\providecommand{{\recocabecera}}{{{reco_cabecera}}}
 {bloque_comandos_extra}
 
-\\newcommand{{\\supuestos}}{{%
+\newcommand{{\supuestos}}{{%
 {texto_supuesto_activo}
 }}
 
-\\newcommand{{\\resumen}}{{%
-\\begin{{itemize}}
-\\item \\textbf{{Flujo de carga:}} {resumen_flujo}\\\\
-\\item \\textbf{{Cortocircuito.}} {resumen_cortocircuito}\\\\
-\\item \\textbf{{Coordinación de protecciones:}} {resumen_protecciones}\\\\
-\\end{{itemize}}
+\newcommand{{\resumen}}{{%
+\begin{{itemize}}
+\item \textbf{{Flujo de carga:}} {resumen_flujo}\\
+\item \textbf{{Cortocircuito.}} {resumen_cortocircuito}\\
+\item \textbf{{Coordinación de protecciones:}} {resumen_protecciones}\\
+\end{{itemize}}
 }}
 
-\\newcommand{{\\refInversores}}{{\\begin{{itemize}}
+\newcommand{{\refInversores}}{{\begin{{itemize}}
 {items_ref_inv}
-\\end{{itemize}}}}
+\end{{itemize}}}}
 
-\\newcommand{{\\Inversores}}{{\\begin{{itemize}}
+\newcommand{{\Inversores}}{{\begin{{itemize}}
 {items_mod_inv}
-\\end{{itemize}}}}
+\end{{itemize}}}}
 
-\\newcommand{{\\cantidadInversores}}{{\\begin{{itemize}}
+\newcommand{{\cantidadInversores}}{{\begin{{itemize}}
 {items_cant_inv}
-\\end{{itemize}}}}
+\end{{itemize}}}}
 
-\\newcommand{{\\CONCLUSIONFERFILESCARGA}}{{%
+\newcommand{{\CONCLUSIONFERFILESCARGA}}{{%
 {conclusion_perfiles_carga}
 }}
 
-\\newcommand{{\\equipos}}{{%
+\newcommand{{\equipos}}{{%
 {texto_equipos}
 }}
 
-\\newcommand{{\\sistemaAC}}{{%
+\newcommand{{\sistemaAC}}{{%
 Para el cálculo de la protección general de los inversores, se tuvieron en cuenta los siguientes parámetros:
-\\begin{{center}}
-    \\begin{{minipage}}{{0.9\\textwidth}}
-        \\centering
-        \\captionof{{table}}{{Sistema AC}}
-        \\label{{tab:sistema_AC}}
-        \\begingroup
-        \\setlength{{\\tabcolsep}}{{10pt}}
-        \\renewcommand{{\\arraystretch}}{{1.3}}
-        \\begin{{tabular}}{{|l|c|}}
-            \\hline
-            \\rowcolor{{azulSeyep}}
-            \\multicolumn{{2}}{{|c|}}{{\\color{{white}}\\textbf{{Sistema AC}}}} \\\\ \\hline
-            \\multicolumn{{2}}{{|c|}}{{Protección arreglo de inversores AC}} \\\\ \\hline
-            Sistema AC & {ac_fases} \\\\ \\hline
-            Potencia & \\capacidadMW \\\\ \\hline
-            Tensión de Línea [kV] & {ac_tension_kv} \\\\ \\hline
-            Intensidad máxima [A] & {ac_corriente_max} \\\\ \\hline
-            Factor de carga continua & {ac_factor_carga} \\\\ \\hline
-            Protección en tablero principal ($\\text{{I}}_{{\\text{{max}}}} \\times 1,25$) [A] & {ac_proteccion_tablero} \\\\ \\hline
-        \\end{{tabular}}
-        \\endgroup
-        \\vspace{{2mm}}\\\\
-        {{\\centering\\footnotesize
-        \\textbf{{\\textit{{{ac_nota_pie}}}}}\\par
+\begin{{center}}
+    \begin{{minipage}}{{0.9\textwidth}}
+        \centering
+        \captionof{{table}}{{Sistema AC}}
+        \label{{tab:sistema_AC}}
+        \begingroup
+        \setlength{{\tabcolsep}}{{10pt}}
+        \renewcommand{{\arraystretch}}{{1.3}}
+        \begin{{tabular}}{{|l|c|}}
+            \hline
+            \rowcolor{{azulSeyep}}
+            \multicolumn{{2}}{{|c|}}{{\color{{white}}\textbf{{Sistema AC}}}} \\ \hline
+            \multicolumn{{2}}{{|c|}}{{Protección arreglo de inversores AC}} \\ \hline
+            Sistema AC & {ac_fases} \\ \hline
+            Potencia & \capacidadMW \\ \hline
+            Tensión de Línea [kV] & {ac_tension_kv} \\ \hline
+            Intensidad máxima [A] & {ac_corriente_max} \\ \hline
+            Factor de carga continua & {ac_factor_carga} \\ \hline
+            Protección en tablero principal ($\text{{I}}_{{\text{{max}}}} \times 1,25$) [A] & {ac_proteccion_tablero} \\ \hline
+        \end{{tabular}}
+        \endgroup
+        \vspace{{2mm}}\\
+        {{\centering\footnotesize
+        \textbf{{\textit{{{ac_nota_pie}}}}}\par
         }}
-    \\end{{minipage}}
-\\end{{center}}
+    \end{{minipage}}
+\end{{center}}
 }}
 
-\\newcommand{{\\CONCLUSIONES}}{{%
-\\begin{{itemize}}
+\newcommand{{\CONCLUSIONES}}{{%
+\begin{{itemize}}
 {bloque_items_conclusiones}
-\\end{{itemize}}
+\end{{itemize}}
 }}
 """
 
@@ -1508,9 +1510,8 @@ El presente documento tiene como objetivo principal analizar la viabilidad técn
 """ if incluir_subsec_1_1 else ""
 
     subsec_1_2_tex = rf"""\subsection{{\textit{{Supuestos y herramienta de modelación}}}}
-La información requerida para el modelamiento del área de influencia fue suministrada por el cliente y el OR comprendiendo el diagrama unifilar con sus respectivos nodos asociados al proyecto y sus respectivas cargas con el comportamiento en potencia activa y reactiva. El modelamiento de dicho diagrama unifilar se realizó en el software Digsilent Power Factory.\\
-\\
-\leavevmode\\
+La información requerida para el modelamiento del área de influencia fue suministrada por el cliente y el OR comprendiendo el diagrama unifilar con sus respectivos nodos asociados al proyecto y sus respectivas cargas con el comportamiento en potencia activa y reactiva. El modelamiento de dicho diagrama unifilar se realizó en el software Digsilent Power Factory.
+
 \supuestos
 {bloque_tabla_supuestos}
 """ if incluir_subsec_1_2 else ""
@@ -1603,8 +1604,8 @@ La información requerida para el modelamiento del área de influencia fue sumin
         {filas_inversores_tabla}
     \end{{tabular}}
 \end{{table}}
-{sec2_cierre}\\
-\leavevmode\\
+{sec2_cierre}
+
 {bloque_geoespacial}
 \begin{{figure}}[h!]
     \centering
@@ -1637,8 +1638,8 @@ La información requerida para el modelamiento del área de influencia fue sumin
 """ if incluir_subsec_3_1 else ""
 
     subsec_3_2_tex = rf"""\subsection{{\textit{{Información OR}}}}
-{sec3_or_texto}\\
-\leavevmode\\
+{sec3_or_texto}
+
 Dado lo anterior, la información suministrada se puede apreciar en las {bloque_informacion_or}
 """ if incluir_subsec_3_2 else ""
 
@@ -1674,18 +1675,18 @@ Dado lo anterior, la información suministrada se puede apreciar en las {bloque_
 """ if incluir_subsec_4_3 else ""
 
     subsec_4_4_tex = rf"""\subsection{{\textit{{Información de energía producida Vs Energía demandada.}}}}
-{sec4_4_intro}\\
-\leavevmode\\
+{sec4_4_intro}
+
 \begin{{figure}}[H]
     \centering
     {img_curva_cto}
     \caption{{{caption_curva_cto}}}
     \label{{fig:curvadecarga}}
 \end{{figure}}
-{sec4_4_curva}\\
-\leavevmode\\
-{sec4_4_comp}\\
-\leavevmode\\
+{sec4_4_curva}
+
+{sec4_4_comp}
+
 \begin{{figure}}[H]
     \centering
     {img_consumo_gen}
@@ -1715,8 +1716,8 @@ Para garantizar una conexión y operación que cumpla los criterios técnicos de
 \item Circular CREG 015 de 2018.
 \item Circular CREG 025 de 1995.
 \end{{itemize}}
-Teniendo en cuenta las anteriores normativas se establece algunos de los criterios y límites para tener en cuenta dentro de este documento.\\
-\\
+Teniendo en cuenta las anteriores normativas se establece algunos de los criterios y límites para tener en cuenta dentro de este documento:
+
 \begin{{itemize}}
 \item CREG 025 de 1995, “El STN se planeará de tal forma que permita, en conjunto con la generación, los sistemas de transmisión regionales y los sistemas de distribución local, Asegurar que la tensión en las barras de carga a nivel de 220 kV y superiores no sea inferior al 90\% del valor nominal, ni superior al 110\%”.
 \item Circular CREG 174 de 2021, en caso de implementar inversores en los proyectos, la capacidad del proyecto corresponde a la sumatoria de las capacidades nominales de los inversores, en el lado con conexión al SIN, la capacidad se deberá asumir con un factor de potencia unitario.
@@ -1744,7 +1745,7 @@ A continuación, se instalan los estudios realizados:
 % =====================================================================
 \newpage
 \section{{METODOLOGÍA}}
-{sec5_intro}\\
+{sec5_intro}\par\medskip
 {subsec_5_1_tex}
 {subsec_5_2_tex}
 """ if (incluir_sec_5 and (incluir_subsec_5_1 or incluir_subsec_5_2)) else ""
@@ -1811,17 +1812,18 @@ A continuación, se presenta el resumen de los resultados de cargabilidad y perf
     \label{{tab:Cargabilidad}}
     {img_cargabilidad}
 \end{{table}}
-{sec7_cargabilidad_txt}\\
-\leavevmode\\
-En la \cref{{tab:TensionesPU}} se muestran los resultados de los perfiles de tensión del circuito con y sin proyecto de generación.\\
+{sec7_cargabilidad_txt}
+
+En la \cref{{tab:TensionesPU}} se muestran los resultados de los perfiles de tensión del circuito con y sin proyecto de generación.
+
 \begin{{table}}[htbp]
     \centering
     \caption{{Tensión de barras}}
     \label{{tab:TensionesPU}}
     {img_tensiones_pu}
 \end{{table}}
-\CONCLUSIONFERFILESCARGA \\
-\leavevmode\\
+\CONCLUSIONFERFILESCARGA
+
 Con el fin de evaluar el cambio en el perfil de tensión de los nodos de la zona de interés del proyecto {sigla_proyecto} \nombreProyecto, se presentan los valores p.u. de las tensiones del circuito la \cref{{fig:perfiltensionCTO}}
 \begin{{figure}}[h]
     \centering
@@ -2100,10 +2102,57 @@ def compilar_estudio_latex(params=None):
     with open(tex_filename, "w", encoding="utf-8") as f:
         f.write(contenido_latex)
 
+    import shutil
+    import glob
+
+    def buscar_ejecutable_pdflatex():
+        # 1. Probar en PATH del sistema
+        ejecutable = shutil.which("pdflatex") or shutil.which("pdflatex.exe")
+        if ejecutable:
+            return ejecutable
+        # 2. Rutas conocidas en Windows (MiKTeX y TeX Live)
+        rutas_windows = [
+            r"C:\Program Files\MiKTeX\miktex\bin\x64\pdflatex.exe",
+            r"C:\Program Files (x86)\MiKTeX\miktex\bin\pdflatex.exe",
+            os.path.expandvars(r"%LOCALAPPDATA%\Programs\MiKTeX\miktex\bin\x64\pdflatex.exe"),
+            os.path.expandvars(r"%USERPROFILE%\AppData\Local\Programs\MiKTeX\miktex\bin\x64\pdflatex.exe"),
+        ]
+        rutas_windows.extend(glob.glob(r"C:\texlive\*\bin\windows\pdflatex.exe"))
+        rutas_windows.extend(glob.glob(r"C:\texlive\*\bin\win32\pdflatex.exe"))
+        # 3. Rutas conocidas en Linux / Mac
+        rutas_unix = [
+            "/usr/bin/pdflatex",
+            "/usr/local/bin/pdflatex",
+            "/Library/TeX/texbin/pdflatex",
+            "/usr/texbin/pdflatex"
+        ]
+        rutas_unix.extend(glob.glob("/usr/local/texlive/*/bin/*/pdflatex"))
+        todas_rutas = rutas_windows if os.name == 'nt' else rutas_unix
+        for r in todas_rutas:
+            if os.path.isfile(r) and (os.name == 'nt' or os.access(r, os.X_OK)):
+                return r
+        return None
+
+    pdflatex_bin = buscar_ejecutable_pdflatex()
+    if not pdflatex_bin:
+        return False, (
+            "⚠️ No se encontró el ejecutable 'pdflatex' en las rutas del sistema.\n\n"
+            "El archivo fuente 'Estudio_Conexion.tex' fue generado y guardado correctamente.\n\n"
+            "• Si estás en Streamlit Cloud: Asegúrate de tener el archivo 'packages.txt' en la raíz de tu repositorio de GitHub con los paquetes de TeX Live:\n"
+            "    texlive-latex-base\n"
+            "    texlive-latex-recommended\n"
+            "    texlive-latex-extra\n"
+            "    texlive-fonts-recommended\n"
+            "    texlive-science\n"
+            "    texlive-lang-spanish\n"
+            "  y reinicia la app ('Reboot App' en el menú de Streamlit Cloud).\n\n"
+            "• Si estás en tu computador local: Verifica que MiKTeX o TeX Live esté instalado y agregado a la variable PATH del sistema.\n\n"
+            "• Opción Rápida: Puedes descargar el archivo fuente 'Estudio_Conexion.tex' generado con el botón de abajo y compilarlo directamente en Overleaf o en tu editor TeX favorito."
+        )
+
     try:
-        cmd = ["pdflatex", "-interaction=nonstopmode", "-halt-on-error", tex_filename]
-        
-        proceso1 = subprocess.run(cmd, capture_output=True, text=True, timeout=45)
+        cmd = [pdflatex_bin, "-interaction=nonstopmode", "-halt-on-error", tex_filename]
+        proceso1 = subprocess.run(cmd, capture_output=True, text=True, timeout=60, shell=(os.name == 'nt'))
         if proceso1.returncode != 0:
             log_contenido = ""
             if os.path.exists("Estudio_Conexion.log"):
@@ -2114,22 +2163,20 @@ def compilar_estudio_latex(params=None):
             bloques_error = []
             for idx, line in enumerate(todas_lineas):
                 if line.startswith("!"):
-                    fragmento = "\n".join(todas_lineas[idx:idx + 4])
+                    fragmento = "\n".join(todas_lineas[idx:idx + 5])
                     bloques_error.append(fragmento)
 
-            detalle = "\n---\n".join(bloques_error[:3]) if bloques_error else "Error desconocido en LaTeX."
-            return False, f"Fallo de compilación:\n{detalle}"
+            detalle = "\n---\n".join(bloques_error[:3]) if bloques_error else "Error desconocido en pdflatex."
+            return False, f"Fallo de compilación en LaTeX:\n{detalle}"
 
-        proceso2 = subprocess.run(cmd, capture_output=True, text=True, timeout=45)
+        # Segunda pasada para generar TOC y referencias cruzadas
+        subprocess.run(cmd, capture_output=True, text=True, timeout=60, shell=(os.name == 'nt'))
 
         if os.path.exists(pdf_filename):
             return True, pdf_filename
         else:
             return False, "No se encontró el PDF resultante tras la compilación."
-
     except subprocess.TimeoutExpired:
-        return False, "La compilación tardó demasiado y fue interrumpida (timeout de 45s)."
-    except subprocess.CalledProcessError as e:
-        return False, f"Error en el proceso LaTeX: {str(e)}"
+        return False, "La compilación tardó demasiado y fue interrumpida (timeout de 60s)."
     except Exception as e:
-        return False, f"Error inesperado: {str(e)}"
+        return False, f"Error inesperado al ejecutar pdflatex: {str(e)}"

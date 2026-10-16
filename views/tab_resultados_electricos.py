@@ -213,11 +213,12 @@ def render(config_vars=None):
     st.markdown("### 7.6 Análisis de Funcionamiento en Isla")
     render_control_subseccion("subsec_7_6", "Análisis para evitar funcionamiento en isla no intencional")
 
+    norma_cno_val = st.session_state.get("config_vars", {}).get("normaCNO", st.session_state.get("normaCNO", "2233"))
     default_isla_conclusion = (
         r"La Ecuación \eqref{eq:balance_potencia} arroja un resultado donde la potencia instalada acumulada más la capacidad del proyecto "
         r"supera la demanda mínima del circuito, confirmando la existencia de riesgo de funcionamiento en isla no intencional ante contingencias "
         r"o aperturas del elemento de maniobra del Operador de Red. Para mitigar este riesgo y garantizar la seguridad de la red y del personal, "
-        r"la planta implementará un esquema de protección anti-isla activo y coordinado conforme a las disposiciones normativas del Acuerdo CNO 2233 de 2026; "
+        f"la planta implementará un esquema de protección anti-isla activo y coordinado conforme a las disposiciones normativas del Acuerdo CNO {norma_cno_val}; "
         r"los detalles de la filosofía de operación, la parametrización de las funciones intrínsecas del inversor, las funciones de respaldo y la coordinación "
         r"de tiempos de despeje para evitar la operación en isla se presentan de manera detallada en el Estudio de Ajuste de Protecciones (EACP) entregado adjunto al presente estudio de conexión."
     )

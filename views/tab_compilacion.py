@@ -59,7 +59,21 @@ def render(config_vars, resumen_textos, df_control_cambios, texto_supuesto_activ
                     except Exception as ex:
                         st.error(f"Error al leer el archivo PDF para descarga: {ex}")
                 else:
-                    st.error(f"Error en la compilación: {resultado}")
+                    if "No se encontró" in resultado:
+                        st.warning(resultado)
+                    else:
+                        st.error(f"Error en la compilación: {resultado}")
+                    if os.path.exists("Estudio_Conexion.tex"):
+                        with open("Estudio_Conexion.tex", "rb") as f_tex:
+                            st.download_button(
+                                label="📄 Descargar código fuente LaTeX (.tex)",
+                                data=f_tex.read(),
+                                file_name="Estudio_Conexion.tex",
+                                mime="text/plain",
+                                key="btn_error_descarga_tex",
+                                use_container_width=True,
+                                help="Descarga el código fuente .tex generado y compílalo directamente en Overleaf o con tu distribución LaTeX local (MiKTeX/TeX Live)."
+                            )
 
     with col_b2:
         if st.button("📄 Generar Código Fuente (.tex)", type="secondary", use_container_width=True):
