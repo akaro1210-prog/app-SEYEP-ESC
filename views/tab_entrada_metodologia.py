@@ -1,5 +1,5 @@
 import streamlit as st
-from secciones_manager import render_control_seccion, render_control_subseccion, render_boton_agregar_seccion
+from secciones_manager import render_control_seccion, render_boton_agregar_seccion
 
 def guardar_archivo_subido(uploaded_file, nombre_destino):
     if uploaded_file is not None:
@@ -12,11 +12,10 @@ def render():
     st.subheader("📊 Secciones 4, 5 y 6: Información de Entrada, Metodología y Escenarios")
     st.write("Personaliza la zona de influencia, curvas de demanda vs generación, normativa aplicable y escenarios de análisis.")
 
-    # Control de Sección 4 (Opcional)
+    # Control de Sección 4 y sus Subsecciones 4.1 a 4.4 (Opcional)
     render_control_seccion("sec_4", "Sección 4: Información de Entrada y Supuestos de Salida")
 
     st.markdown("### 4.1 Modelo de la zona de influencia")
-    render_control_subseccion("subsec_4_1", "Subsección 4.1: Modelo de la zona de influencia (Unifilar)")
     default_sec4_1 = r"En la \cref{fig:Unifilar} se presenta el diagrama unifilar del circuito \CTO\ suministrado por el OR."
     sec4_1_texto = st.text_area("Texto de Zona de Influencia (4.1):", value=default_sec4_1, height=70)
     up_unifilar = st.file_uploader("Subir 'UnifilarCTO.png'", type=["png", "jpg", "jpeg"], key="up_unifilar")
@@ -25,14 +24,12 @@ def render():
 
     st.markdown("---")
     st.markdown("### 4.2 y 4.3 Horizonte y Demanda de Potencia")
-    render_control_subseccion("subsec_4_2", "Subsección 4.2: Horizonte de análisis (CREG 021)")
     default_sec4_2 = (
         r"En el numeral 7.1 de la circular CREG 021 de 2022, se establece el horizonte de análisis, "
         r"en la \cref{tab:horizonte} se presentan los años a analizar según la información suministrada."
     )
     sec4_2_texto = st.text_area("Texto Horizonte de análisis (4.2):", value=default_sec4_2, height=70)
 
-    render_control_subseccion("subsec_4_3", "Subsección 4.3: Demanda de potencia del circuito")
     default_sec4_3 = (
         r"La energía demandada por el circuito fue suministrada por el OR en la \cref{tab:demandaenergia}, "
         r"en la cual se especifica la demanda del circuito por hora."
@@ -44,7 +41,6 @@ def render():
 
     st.markdown("---")
     st.markdown("### 4.4 Información de energía producida Vs Energía demandada")
-    render_control_subseccion("subsec_4_4", "Subsección 4.4: Información de energía producida Vs Energía demandada")
     default_sec4_4_intro = (
         r"Para el consumo y la generación promedio por hora, se toman los datos que se muestran en la \cref{tab:consumoVSgeneracion}."
     )
@@ -83,10 +79,8 @@ def render():
     render_boton_agregar_seccion("sec_4", "Sección 4 (Información de Entrada)")
 
     st.markdown("---")
-    # Control de Sección 5 (Opcional)
+    # Control de Sección 5 y sus Subsecciones 5.1 y 5.2 (Opcional)
     render_control_seccion("sec_5", "Sección 5: Metodología de Análisis")
-    render_control_subseccion("subsec_5_1", "Subsección 5.1: Criterios técnicos normativos (RETIE, CREG)")
-    render_control_subseccion("subsec_5_2", "Subsección 5.2: Descripción de los análisis a realizar")
 
     st.markdown("### 5. Metodología de Análisis")
     default_sec5_intro = (
@@ -99,9 +93,8 @@ def render():
     render_boton_agregar_seccion("sec_5", "Sección 5 (Metodología)")
 
     st.markdown("---")
-    # Control de Sección 6 (Opcional)
+    # Control de Sección 6 y su Subsección 6.1 (Opcional)
     render_control_seccion("sec_6", "Sección 6: Descripción de los Escenarios de Análisis")
-    render_control_subseccion("subsec_6_1", "Subsección 6.1: Variables y escenarios de demanda/generación")
 
     st.markdown("### 6. Descripción de los Escenarios de Análisis")
     default_sec6_despacho = (
