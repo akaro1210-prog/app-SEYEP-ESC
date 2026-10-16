@@ -1,5 +1,5 @@
 import streamlit as st
-from secciones_manager import render_control_seccion, render_control_subseccion, render_boton_agregar_seccion
+from secciones_manager import render_control_seccion, render_boton_agregar_seccion
 
 def render(config_vars=None):
     if config_vars is None:
@@ -10,12 +10,8 @@ def render(config_vars=None):
 
     st.subheader(f"📝 Sección 1: Resumen Ejecutivo y Resultados ({tag})")
     
-    # Control de Sección Opcional
+    # Control de Sección 1 y sus Subsecciones Opcionales (1.1, 1.2, 1.3)
     render_control_seccion("sec_1", f"Sección 1: Resumen Ejecutivo y Supuestos ({tag})")
-
-    # Controles de Subsecciones Opcionales para Sección 1
-    render_control_subseccion("subsec_1_1", f"Subsección 1.1: Objetivo y alcance ({tag})")
-    render_control_subseccion("subsec_1_3", "Subsección 1.3: Resumen de los principales resultados (\\resumen)")
     st.write(
         f"Personaliza los párrafos de introducción, los puntos técnicos del resumen (`\\resumen`) y el párrafo de cierre "
         f"para el régimen de **{tag}**. Puedes usar comandos LaTeX como `\\nombreProyecto` y `\\FechaEntrada`."
