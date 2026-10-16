@@ -1,6 +1,6 @@
 import streamlit as st
 import os
-from secciones_manager import render_control_seccion, render_control_subseccion, render_boton_agregar_seccion
+from secciones_manager import render_control_seccion, render_boton_agregar_seccion
 
 def guardar_archivo_subido(uploaded_file, nombre_destino):
     """Guarda un archivo subido en la raíz del proyecto para que pdflatex lo encuentre."""
@@ -24,9 +24,8 @@ def render(config_vars=None):
         f"para el régimen de **{tag}**."
     )
 
-    # Control de Sección 2 (Opcional)
+    # Control de Sección 2 y su Subsección 2.1 (Opcional)
     render_control_seccion("sec_2", f"Sección 2: Descripción General del Proyecto ({tag})")
-    render_control_subseccion("subsec_2_1", f"Subsección 2.1: Información del proyecto y coordenadas ({tag})")
 
     st.markdown(f"### 2.1 Información del proyecto ({tag})")
     default_sec2_intro = (
@@ -95,11 +94,10 @@ def render(config_vars=None):
     render_boton_agregar_seccion("sec_2", "Sección 2 (Descripción General del Proyecto)")
 
     st.markdown("---")
-    # Control de Sección 3 (Opcional)
+    # Control de Sección 3 y sus Subsecciones 3.1 y 3.2 (Opcional)
     render_control_seccion("sec_3", f"Sección 3: Parámetros Eléctricos de los Equipos ({tag})")
 
     st.markdown("### 3.1 Equipos (`\\equipos` y `\\figinversores`)")
-    render_control_subseccion("subsec_3_1", "Subsección 3.1: Equipos (Paneles e Inversores)")
     default_sec3_intro = (
         r"En la \cref{fig:fichapanel}, se puede apreciar las características técnicas de los paneles fotovoltaicos seleccionados para el proyecto."
     )
@@ -125,7 +123,6 @@ def render(config_vars=None):
                 st.success(f"✅ {nombre_ficha} guardada.")
 
     st.markdown(f"### 3.2 Información OR ({tag})")
-    render_control_subseccion("subsec_3_2", f"Subsección 3.2: Información OR ({tag})")
     default_sec3_or_texto = (
         rf"El proyecto {tag} \nombreProyecto\ se conectará al circuito \CTO\, por tanto, el OR suministro a través de los insumos "
         r"datos de red de todo el circuito y ajuste de coordinación de protecciones."
