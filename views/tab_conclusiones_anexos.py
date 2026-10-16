@@ -1,10 +1,14 @@
 import streamlit as st
 import pandas as pd
 import os
-from secciones_manager import render_control_seccion, render_boton_agregar_seccion
+from secciones_manager import (
+    render_control_seccion,
+    render_control_subseccion,
+    render_boton_agregar_seccion,
+)
+
 
 def guardar_archivo_subido(uploaded_file, nombre_destino):
-    """Guarda la imagen subida con el nombre exacto esperado por LaTeX (convirtiendo a PNG válido)."""
     if uploaded_file is not None:
         try:
             from PIL import Image
@@ -17,38 +21,42 @@ def guardar_archivo_subido(uploaded_file, nombre_destino):
         return True
     return False
 
+
 def estado_archivo(nombre_archivo):
-    return "✅ Cargada" if os.path.exists(nombre_archivo) else "⚠️ Pendiente"
+    return "✅ En carpeta" if os.path.exists(nombre_archivo) else "⚠️ Pendiente"
+
 
 def render(config_vars=None):
     if config_vars is None:
         config_vars = st.session_state.get("config_vars", {})
+
     tipo_estudio = config_vars.get("tipo_estudio", st.session_state.get("tipo_estudio", "GD"))
     es_autogen = ("autogenerador" in str(tipo_estudio).lower() or bool(config_vars.get("es_autogenerador", False)))
     tag = "Autogenerador" if es_autogen else "GD"
-    year_ini = str(config_vars.get("YearInicial", config_vars.get("year_inicial", "2027"))).strip() or "2027"
-    year_fin = str(config_vars.get("YearFinal", config_vars.get("year_final", "2032"))).strip() or "2032"
 
-    st.subheader(f"📌 Secciones 9 y 10: Conclusiones y Anexos ({tag})")
-    st.write(
-        f"Edita las viñetas de conclusiones del estudio (`\\CONCLUSIONES`) y configura o desactiva la sección de Anexos "
-        f"para el régimen de **{tag}**."
-    )
+    year_ini = str(config_vars.get("YearInicial", config_vars.get("year_inicial", "2027"))).strip()
+    year_fin = str(config_vars.get("YearFinal", config_vars.get("year_final", "2032"))).strip()
 
-    # Control de Sección 9 y su Subsección 9.1 (Opcional)
+    st.subheader(f"📑 Secciones 9 y 10: Conclusiones y Anexos ({tag})")
+    st.write(f"Gestiona las conclusiones técnicas finales del informe ({tag}) y la galería de diagramas unifilares de flujo de carga.")
+
+    # =========================================================================
+    # SECCIÓN 9: CONCLUSIONES
+    # =========================================================================
     render_control_seccion("sec_9", f"Sección 9: Conclusiones ({tag})")
 
-    st.markdown(f"### 9. Conclusiones ({tag}) (`\\CONCLUSIONES`)")
-    st.caption("Puedes agregar, editar o eliminar filas. Cada fila se convertirá en un `\\item` dentro de la sección de Conclusiones.")
+    st.markdown(f"### 9.1 Concepto Técnico y Conclusiones ({tag})")
+    render_control_subseccion("subsec_9_1", "Concepto técnico y conclusiones finales")
+
     conclusiones_default = pd.DataFrame([
-        {"Conclusión": r"Los equipos empleados en el proyecto (Paneles Solares, Protecciones) cumplen con la certificación de conformidad RETIE."},
-        {"Conclusión": rf"Las simulaciones de flujo en estado estable con {tag} se evidencian tensiones que se mantienen en los valores establecidos."},
-        {"Conclusión": r"Los niveles de perdidasse mantienen con la introducción del proyecto."},
+        {"Conclusión": rf"El perfil de tensiones se mantiene en los niveles establecidos por la regulación CREG 024 de 2005. "
+                       rf"Las tensiones no presentan variaciones significativas en la zona de influencia con la introducción del proyecto."},
         {"Conclusión": rf"Las simulaciones de cortocircuito no presentan cambios mayores al 10\% con la entrada en operación del {tag} en ningún punto del circuito"},
         {"Conclusión": r"Los ajustes propuestos para el proyecto coordinan correctamente con las protecciones existentes, por lo tanto no se requiere cambios de ajustes en los elementos existentes."},
         {"Conclusión": r"Los inversores cumplen con las normas de equivalencia internacionales como lo son la IEEE1547 y la UL 1741 para la integración a la red. Su nivel de distorsión armónica de corriente según ficha técnica es <3\%."},
         {"Conclusión": r"El Sistema propuesto de 900 kWac no afecta de manera significativa la red de distribución y la potencia inyectada de los excedentes será consumida por la red."}
     ])
+
     df_conclusiones = st.data_editor(
         conclusiones_default,
         num_rows="dynamic",
@@ -60,24 +68,21 @@ def render(config_vars=None):
     render_boton_agregar_seccion("sec_9", "Sección 9 (Conclusiones)")
 
     st.markdown("---")
-    # Control de Sección 10 y su Subsección 10.1 (Opcional)
+
+    # =========================================================================
+    # SECCIÓN 10: ANEXOS
+    # =========================================================================
     render_control_seccion("sec_10", "Sección 10: Anexos (Flujos de Carga y Gráficas)")
 
-    st.markdown("### 10. Anexos: Gráficas de Perfiles y Flujos de Carga (`\\Flujosdecarga`)")
-
-    # Opción principal para activar o desactivar (omitir) por completo los Anexos en el PDF
-    incluir_anexos = st.checkbox(
-        "✅ Incluir sección de Anexos (Flujos de Carga) en el informe PDF",
-        value=True,
-        key="chk_incluir_anexos"
-    )
+    st.markdown("### 10.1 Gráficas de Perfiles y Flujos de Carga (`\\Flujosdecarga`)")
+    incluir_subsec_10_1 = render_control_subseccion("subsec_10_1", "Gráficas de flujos de carga y perfiles de tensión")
 
     modo_anexos = "H9_H12_H15"
     archivos_libres_anexos = st.session_state.get("archivos_libres_anexos", [])
     omitir_no_cargados = False
 
-    if not incluir_anexos:
-        st.warning("🚫 La sección de Anexos está desactivada. Se omitirá por completo del informe PDF y de la Tabla de Contenido.")
+    if not incluir_subsec_10_1:
+        st.warning("🚫 Las gráficas de Anexos están desactivadas (opcionales). Se omitirán del informe PDF.")
     else:
         omitir_no_cargados = st.checkbox(
             "Omitir automáticamente del PDF las gráficas de anexos que aún no tengan imagen cargada",
@@ -94,7 +99,6 @@ def render(config_vars=None):
             ],
             index=0
         )
-
         if modo_anexos_label.startswith("Plantilla Horaria"):
             modo_anexos = "H9_H12_H15"
         elif modo_anexos_label.startswith("Plantilla Carga Pura"):
@@ -109,7 +113,6 @@ def render(config_vars=None):
             )
 
             col_y1, col_y2 = st.columns(2)
-
             if modo_anexos == "H9_H12_H15":
                 slots_ini = [
                     (f"H9_SP_{year_ini}.png", f"Hora 9 Sin Proyecto ({year_ini})"),
@@ -164,7 +167,6 @@ def render(config_vars=None):
                     )
                     if guardar_archivo_subido(up_f, arch_dest):
                         st.success(f"✅ Guardada como {arch_dest}")
-
         else:
             st.info("Sube todas las imágenes de flujo de carga que quieras incluir en Anexos; se insertarán en el orden en que las subas.")
             up_libres = st.file_uploader(
@@ -189,7 +191,7 @@ def render(config_vars=None):
 
     datos = {
         "df_conclusiones": df_conclusiones,
-        "incluir_anexos": incluir_anexos,
+        "incluir_anexos": incluir_subsec_10_1,
         "omitir_no_cargados": omitir_no_cargados,
         "modo_anexos": modo_anexos,
         "archivos_libres_anexos": archivos_libres_anexos

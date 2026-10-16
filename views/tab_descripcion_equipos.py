@@ -1,33 +1,42 @@
 import streamlit as st
-import os
-from secciones_manager import render_control_seccion, render_boton_agregar_seccion
+from secciones_manager import (
+    render_control_seccion,
+    render_control_subseccion,
+    render_boton_agregar_seccion,
+)
+
 
 def guardar_archivo_subido(uploaded_file, nombre_destino):
-    """Guarda un archivo subido en la raíz del proyecto para que pdflatex lo encuentre."""
     if uploaded_file is not None:
         with open(nombre_destino, "wb") as f:
             f.write(uploaded_file.getbuffer())
         return True
     return False
 
+
 def render(config_vars=None):
     if config_vars is None:
         config_vars = st.session_state.get("config_vars", {})
+
     tipo_estudio = config_vars.get("tipo_estudio", st.session_state.get("tipo_estudio", "GD"))
     es_autogen = ("autogenerador" in str(tipo_estudio).lower() or bool(config_vars.get("es_autogenerador", False)))
     tag = "Autogenerador" if es_autogen else "GD"
-    tag_regimen = "Autogeneración" if es_autogen else "GD"
+    tag_regimen = "autogeneración" if es_autogen else "generación distribuida"
 
-    st.subheader(f"🏗️ Secciones 2 y 3: Descripción del Proyecto, Equipos e Insumos OR ({tag})")
+    st.subheader(f"🏗️ Secciones 2 y 3: Descripción del Proyecto y Equipos ({tag})")
     st.write(
-        f"Configura los textos, tablas de equipos, inversores, hojas técnicas e insumos del Operador de Red "
+        f"Configura las características generales, paneles, configuración multirreferencia de inversores y datos del Operador de Red "
         f"para el régimen de **{tag}**."
     )
 
-    # Control de Sección 2 y su Subsección 2.1 (Opcional)
+    # =========================================================================
+    # SECCIÓN 2: DESCRIPCIÓN GENERAL DEL PROYECTO
+    # =========================================================================
     render_control_seccion("sec_2", f"Sección 2: Descripción General del Proyecto ({tag})")
 
-    st.markdown(f"### 2.1 Información del proyecto ({tag})")
+    st.markdown(f"### 2.1 Información del Proyecto ({tag})")
+    render_control_subseccion("subsec_2_1", "Información del proyecto y coordenadas geográficas")
+
     default_sec2_intro = (
         rf"El proyecto \nombreProyecto\ de {tag_regimen} \capacidadMW, se conectará al SIN a través del circuito \CTO\ "
         r"de la S/E \SSEE\ al nivel de tensión \NT, propiedad del operador de red \OR, La ubicación del proyecto es \ubicacion. "
@@ -55,7 +64,6 @@ def render(config_vars=None):
 
     st.markdown("#### Configuración de Inversores (1 a 3 referencias)")
     num_inversores = st.selectbox("Cantidad de referencias de inversores en el proyecto:", [1, 2, 3], index=0)
-
     inv_items = []
     defaults_inv = [
         ("Inversor 150 kW On-Grid.", "Growat MAX 150KTL3-X2MV", "6 Und."),
@@ -78,7 +86,6 @@ def render(config_vars=None):
     sec2_cierre = st.text_area("Párrafo de contextualización de ubicación:", value=default_sec2_cierre, height=70)
 
     incluir_geoespacial = st.checkbox("Incluir figura de Diagrama Eléctrico Geoespacial (Diagrama Geoespacial.png)", value=False)
-
     col_u1, col_u2 = st.columns(2)
     with col_u1:
         up_ubicacion = st.file_uploader("Subir imagen 'Ubicacion Geográfica.png'", type=["png", "jpg", "jpeg"], key="up_ubic")
@@ -94,10 +101,15 @@ def render(config_vars=None):
     render_boton_agregar_seccion("sec_2", "Sección 2 (Descripción General del Proyecto)")
 
     st.markdown("---")
-    # Control de Sección 3 y sus Subsecciones 3.1 y 3.2 (Opcional)
+
+    # =========================================================================
+    # SECCIÓN 3: PARÁMETROS ELÉCTRICOS DE LOS EQUIPOS
+    # =========================================================================
     render_control_seccion("sec_3", f"Sección 3: Parámetros Eléctricos de los Equipos ({tag})")
 
     st.markdown("### 3.1 Equipos (`\\equipos` y `\\figinversores`)")
+    render_control_subseccion("subsec_3_1", "Equipos (Paneles solares e Inversores fotovoltaicos)")
+
     default_sec3_intro = (
         r"En la \cref{fig:fichapanel}, se puede apreciar las características técnicas de los paneles fotovoltaicos seleccionados para el proyecto."
     )
@@ -122,7 +134,10 @@ def render(config_vars=None):
             if guardar_archivo_subido(up_finv, nombre_ficha):
                 st.success(f"✅ {nombre_ficha} guardada.")
 
+    st.markdown("---")
     st.markdown(f"### 3.2 Información OR ({tag})")
+    render_control_subseccion("subsec_3_2", "Información del Operador de Red (Equivalente de Red y Cargas)")
+
     default_sec3_or_texto = (
         rf"El proyecto {tag} \nombreProyecto\ se conectará al circuito \CTO\, por tanto, el OR suministro a través de los insumos "
         r"datos de red de todo el circuito y ajuste de coordinación de protecciones."
@@ -173,6 +188,7 @@ def render(config_vars=None):
         "usar_equivalente_png": modo_equivalente.startswith("Imagen")
     }
     st.session_state["datos_sec_2_3"] = datos
+
     # Botón para agregar secciones adicionales en Sección 3
     render_boton_agregar_seccion("sec_3", "Sección 3 (Parámetros Eléctricos de los Equipos)")
 

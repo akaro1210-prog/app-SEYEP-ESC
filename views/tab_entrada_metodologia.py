@@ -1,5 +1,10 @@
 import streamlit as st
-from secciones_manager import render_control_seccion, render_boton_agregar_seccion
+from secciones_manager import (
+    render_control_seccion,
+    render_control_subseccion,
+    render_boton_agregar_seccion,
+)
+
 
 def guardar_archivo_subido(uploaded_file, nombre_destino):
     if uploaded_file is not None:
@@ -8,14 +13,19 @@ def guardar_archivo_subido(uploaded_file, nombre_destino):
         return True
     return False
 
+
 def render():
     st.subheader("📊 Secciones 4, 5 y 6: Información de Entrada, Metodología y Escenarios")
     st.write("Personaliza la zona de influencia, curvas de demanda vs generación, normativa aplicable y escenarios de análisis.")
 
-    # Control de Sección 4 y sus Subsecciones 4.1 a 4.4 (Opcional)
+    # =========================================================================
+    # SECCIÓN 4: INFORMACIÓN DE ENTRADA Y SUPUESTOS DE SALIDA
+    # =========================================================================
     render_control_seccion("sec_4", "Sección 4: Información de Entrada y Supuestos de Salida")
 
-    st.markdown("### 4.1 Modelo de la zona de influencia")
+    st.markdown("### 4.1 Modelo de la Zona de Influencia")
+    render_control_subseccion("subsec_4_1", "Modelo de la zona de influencia (Diagrama Unifilar)")
+
     default_sec4_1 = r"En la \cref{fig:Unifilar} se presenta el diagrama unifilar del circuito \CTO\ suministrado por el OR."
     sec4_1_texto = st.text_area("Texto de Zona de Influencia (4.1):", value=default_sec4_1, height=70)
     up_unifilar = st.file_uploader("Subir 'UnifilarCTO.png'", type=["png", "jpg", "jpeg"], key="up_unifilar")
@@ -23,12 +33,18 @@ def render():
         st.success("✅ UnifilarCTO.png guardado.")
 
     st.markdown("---")
-    st.markdown("### 4.2 y 4.3 Horizonte y Demanda de Potencia")
+    st.markdown("### 4.2 Horizonte de Análisis")
+    render_control_subseccion("subsec_4_2", "Horizonte de análisis (Tabla CREG 021)")
+
     default_sec4_2 = (
         r"En el numeral 7.1 de la circular CREG 021 de 2022, se establece el horizonte de análisis, "
         r"en la \cref{tab:horizonte} se presentan los años a analizar según la información suministrada."
     )
     sec4_2_texto = st.text_area("Texto Horizonte de análisis (4.2):", value=default_sec4_2, height=70)
+
+    st.markdown("---")
+    st.markdown("### 4.3 Demanda de Potencia del Circuito")
+    render_control_subseccion("subsec_4_3", "Demanda de potencia del circuito (Tabla y CSV)")
 
     default_sec4_3 = (
         r"La energía demandada por el circuito fue suministrada por el OR en la \cref{tab:demandaenergia}, "
@@ -40,7 +56,9 @@ def render():
         st.success("✅ DemandaEnergia.csv guardado.")
 
     st.markdown("---")
-    st.markdown("### 4.4 Información de energía producida Vs Energía demandada")
+    st.markdown("### 4.4 Información de Energía Producida Vs Energía Demandada")
+    render_control_subseccion("subsec_4_4", "Información de energía producida vs. Energía demandada")
+
     default_sec4_4_intro = (
         r"Para el consumo y la generación promedio por hora, se toman los datos que se muestran en la \cref{tab:consumoVSgeneracion}."
     )
@@ -53,6 +71,7 @@ def render():
         r"fotovoltaico va a presnetar un mayor impacto."
     )
     sec4_4_curva = st.text_area("Párrafo explicativo de la curva de carga del circuito:", value=default_sec4_4_curva, height=100)
+
     caption_curva_cto = st.text_input(
         "Caption de la figura de curva de carga:",
         value="Demanda de circuito 211-11 suministrado por el operador de red"
@@ -79,24 +98,37 @@ def render():
     render_boton_agregar_seccion("sec_4", "Sección 4 (Información de Entrada)")
 
     st.markdown("---")
-    # Control de Sección 5 y sus Subsecciones 5.1 y 5.2 (Opcional)
+
+    # =========================================================================
+    # SECCIÓN 5: METODOLOGÍA DE ANÁLISIS
+    # =========================================================================
     render_control_seccion("sec_5", "Sección 5: Metodología de Análisis")
 
-    st.markdown("### 5. Metodología de Análisis")
+    st.markdown("### 5.1 Criterios Técnicos Normativos")
+    render_control_subseccion("subsec_5_1", "Criterios técnicos normativos (Resolución CREG 021 de 2022)")
+
     default_sec5_intro = (
         r"Para el desarrollo del presente informe se emplea la información suministrada por \OR, esta base de datos contiene el sistema "
         r"de distribución local desde el nodo de conexión de la S/E \SSEE, en un circuito radial de \NT. Los análisis se realizan para el circuito \CTO."
     )
     sec5_intro = st.text_area("Párrafo introductorio Sección 5 (Metodología):", value=default_sec5_intro, height=80)
 
+    st.markdown("### 5.2 Descripción de los Análisis a Realizar")
+    render_control_subseccion("subsec_5_2", "Descripción de los análisis a realizar (Flujo, Cortocircuito, Protecciones)")
+
     # Botón para agregar secciones adicionales en Sección 5
     render_boton_agregar_seccion("sec_5", "Sección 5 (Metodología)")
 
     st.markdown("---")
-    # Control de Sección 6 y su Subsección 6.1 (Opcional)
+
+    # =========================================================================
+    # SECCIÓN 6: ESCENARIOS DE ANÁLISIS
+    # =========================================================================
     render_control_seccion("sec_6", "Sección 6: Descripción de los Escenarios de Análisis")
 
-    st.markdown("### 6. Descripción de los Escenarios de Análisis")
+    st.markdown("### 6.1 Variables y Escenarios de Análisis")
+    render_control_subseccion("subsec_6_1", "Variables y escenarios de análisis (Demanda y Generación)")
+
     default_sec6_despacho = (
         r"Para la demanda se consideró la información suminstrada por EPM y de acuerdo con el OR y el Consejo Nacional de Operación (CNO) "
         r"con los lineamientos para estudios de conexión simplificado en el marco de la resolución CREG 174 de 2021, el estudio se realizó bajo los siguientes escenarios:"

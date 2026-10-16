@@ -1,10 +1,16 @@
 import streamlit as st
 import pandas as pd
-from secciones_manager import render_control_seccion, render_boton_agregar_seccion
+from secciones_manager import (
+    render_control_seccion,
+    render_control_subseccion,
+    render_boton_agregar_seccion,
+)
+
 
 def render(config_vars=None):
     if config_vars is None:
         config_vars = st.session_state.get("config_vars", {})
+
     tipo_estudio = config_vars.get("tipo_estudio", st.session_state.get("tipo_estudio", "GD"))
     es_autogen = ("autogenerador" in str(tipo_estudio).lower() or bool(config_vars.get("es_autogenerador", False)))
     tag = "Autogenerador" if es_autogen else "GD"
@@ -12,10 +18,15 @@ def render(config_vars=None):
     st.subheader(f"🛡️ Sección 8: Verificación de Protecciones ({tag})")
     st.write(f"Edita las tablas del Sistema AC (`\\sistemaAC`), las protecciones del proyecto ({tag}) y resumen de ajustes ANSI.")
 
-    # Control de Sección 8 y sus Subsecciones 8.1 a 8.4 (Opcional)
+    # Control general de la Sección 8
     render_control_seccion("sec_8", f"Sección 8: Verificación de Protecciones ({tag})")
 
+    # =========================================================================
+    # SUBSECCIÓN 8.1: PARÁMETROS DEL SISTEMA AC
+    # =========================================================================
     st.markdown("### 8.1 Parámetros del Sistema AC (`\\sistemaAC`)")
+    render_control_subseccion("subsec_8_1", "Parámetros del Sistema AC y protecciones principales")
+
     col_ac1, col_ac2, col_ac3 = st.columns(3)
     with col_ac1:
         ac_fases = st.text_input("Sistema AC:", value=r"$3~\phi$")
@@ -27,8 +38,12 @@ def render(config_vars=None):
         ac_proteccion_tablero = st.text_input("Protección en tablero principal [A]:", value="1353*")
         ac_nota_pie = st.text_input("Nota al pie de tabla:", value="*Nota: Valor de protección ajustado a 1360 A.")
 
+    # =========================================================================
+    # SUBSECCIÓN 8.2: TABLAS DE EQUIPOS DE PROTECCIÓN
+    # =========================================================================
     st.markdown("---")
     st.markdown(f"### 8.2 Tablas de Equipos de Protección ({tag})")
+    render_control_subseccion("subsec_8_2", "Equipos y filosofía de protección (Reconectador, Inversores y OR)")
 
     c_p1, c_p2, c_p3 = st.columns(3)
     with c_p1:
@@ -47,8 +62,13 @@ def render(config_vars=None):
         or_protege = st.text_input("Protege (Circuito OR):", value="Circuito completo")
         or_tipo_desc = st.text_input("TIPO (Circuito OR):", value="Se supondrá que es un reconectador")
 
+    # =========================================================================
+    # SUBSECCIÓN 8.3: AJUSTES RECONECTADOR
+    # =========================================================================
     st.markdown("---")
     st.markdown("### 8.3 Ajustes de Protección para el Reconectador del Proyecto (`tab:ajustesrecoProyecto`)")
+    render_control_subseccion("subsec_8_3", "Ajustes de sobrecorriente del Reconectador (ANSI 50/51/50N/51N)")
+
     df_reco_default = pd.DataFrame([
         {"Parámetro": "ANSI 51", "Pick Up [Aprim]": "44", "DIAL [s]": "0,05", "Curva": "IEC - EI"},
         {"Parámetro": "ANSI 50", "Pick Up [Aprim]": "200", "DIAL [s]": "0,0", "Curva": "DT"},
@@ -62,8 +82,13 @@ def render(config_vars=None):
         key="editor_ajustes_reco_proy"
     )
 
+    # =========================================================================
+    # SUBSECCIÓN 8.4: RESUMEN PROTECCIONES SISTEMÁTICAS CNO
+    # =========================================================================
     st.markdown("---")
     st.markdown("### 8.4 Resumen Ajuste de Protecciones Sistemáticas (`tab:resumenajustestotales`)")
+    render_control_subseccion("subsec_8_4", "Resumen de protecciones sistemáticas (ANSI 27/59/59N/81U/81O/Anti-Isla/25)")
+
     df_sist_default = pd.DataFrame([
         {"Función": "Etapa 1: Baja tensión (ANSI 27)", "Ajustes": "0.6 p.u", "Temporización": "2 s"},
         {"Función": "Etapa 2: Baja tensión (ANSI 27)", "Ajustes": "0.4 p.u", "Temporización": "1.5 s"},

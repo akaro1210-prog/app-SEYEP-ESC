@@ -103,18 +103,32 @@ SUBSECCIONES_ESTANDAR = {
     "subsec_10_1": {"sec_padre": "sec_10", "numero": "10.1", "nombre": "Gráficas de flujos de carga y perfiles"},
 }
 
+
 def inicializar_estado_secciones():
     """Garantiza que las estructuras de datos de secciones y subsecciones existan en st.session_state."""
     if "secciones_activas" not in st.session_state:
         st.session_state["secciones_activas"] = {
             sec_id: True for sec_id in SECCIONES_ESTANDAR
         }
+    else:
+        # Asegurar que todas las llaves existan
+        for sec_id in SECCIONES_ESTANDAR:
+            if sec_id not in st.session_state["secciones_activas"]:
+                st.session_state["secciones_activas"][sec_id] = True
+
     if "subsecciones_activas" not in st.session_state:
         st.session_state["subsecciones_activas"] = {
             sub_id: True for sub_id in SUBSECCIONES_ESTANDAR
         }
+    else:
+        # Asegurar que todas las llaves existan
+        for sub_id in SUBSECCIONES_ESTANDAR:
+            if sub_id not in st.session_state["subsecciones_activas"]:
+                st.session_state["subsecciones_activas"][sub_id] = True
+
     if "secciones_personalizadas" not in st.session_state:
         st.session_state["secciones_personalizadas"] = []
+
 
 def esta_seccion_activa(sec_id: str) -> bool:
     """Verifica si una sección principal está activa."""
@@ -124,20 +138,20 @@ def esta_seccion_activa(sec_id: str) -> bool:
         return bool(cargadas[f"incluir_{sec_id}"])
     return bool(st.session_state["secciones_activas"].get(sec_id, True))
 
+
 def esta_subseccion_activa(subsec_id: str) -> bool:
     """Verifica si una subsección específica está activa."""
     inicializar_estado_secciones()
-    # Si la sección padre está desactivada, la subsección tampoco está activa
     info_sub = SUBSECCIONES_ESTANDAR.get(subsec_id)
     if info_sub:
         sec_padre = info_sub.get("sec_padre")
         if sec_padre and not esta_seccion_activa(sec_padre):
             return False
-
     cargadas = st.session_state.get("esc_params_cargados", {})
     if isinstance(cargadas, dict) and f"incluir_{subsec_id}" in cargadas:
         return bool(cargadas[f"incluir_{subsec_id}"])
     return bool(st.session_state["subsecciones_activas"].get(subsec_id, True))
+
 
 def render_control_seccion(sec_id: str, titulo: str) -> bool:
     """
@@ -152,7 +166,7 @@ def render_control_seccion(sec_id: str, titulo: str) -> bool:
         col_chk, col_status = st.columns([3.5, 1.2])
         with col_chk:
             activa = st.checkbox(
-                f"📄 **Incluir en el informe:** {titulo}",
+                f"📑 **Sección Completa:** {titulo}",
                 value=val_default,
                 key=key_widget,
                 help=f"Desmarca esta casilla si {titulo} es opcional y deseas retirarla del documento LaTeX/PDF."
@@ -174,10 +188,10 @@ def render_control_seccion(sec_id: str, titulo: str) -> bool:
         if not activa:
             st.info(
                 f"ℹ️ **Sección opcional omitida:** {titulo} no se generará en el archivo `.tex` ni en el `.pdf` final. "
-                "Los números del resto de secciones se ajustarán automáticamente."
+                "Los números del resto de secciones se reajustarán automáticamente."
             )
-    
-    return activa
+        return activa
+
 
 def render_control_subseccion(subsec_id: str, titulo: str) -> bool:
     """
@@ -185,29 +199,37 @@ def render_control_subseccion(subsec_id: str, titulo: str) -> bool:
     """
     inicializar_estado_secciones()
     ver = obtener_ver()
-    val_default = esta_subseccion_activa(subsec_id)
+    info_sub = SUBSECCIONES_ESTANDAR.get(subsec_id, {})
+    sec_padre = info_sub.get("sec_padre")
+    padre_activo = esta_seccion_activa(sec_padre) if sec_padre else True
+    
+    val_default = esta_subseccion_activa(subsec_id) and padre_activo
     key_widget = f"chk_subsec_{subsec_id}_{ver}"
+    
+    with st.container(border=True):
+        c_s1, c_s2 = st.columns([3.6, 1.4])
+        with c_s1:
+            activa = st.checkbox(
+                f"📌 **Subsección {info_sub.get('numero', '')}:** {titulo}",
+                value=val_default,
+                disabled=not padre_activo,
+                key=key_widget,
+                help=f"Desmarca para marcar esta subsección como opcional y excluirla del informe compilado."
+            )
+        with c_s2:
+            if not padre_activo:
+                st.markdown("<span style='color: #94a3b8; font-size: 0.85rem;'>⏸️ Sección Padre Omitida</span>", unsafe_allow_html=True)
+            elif activa:
+                st.markdown("<span style='color: #10b981; font-weight: bold; font-size: 0.85rem;'>✅ Subsección Activa</span>", unsafe_allow_html=True)
+            else:
+                st.markdown("<span style='color: #f59e0b; font-weight: bold; font-size: 0.85rem;'>⏸️ Opcional (Omitida)</span>", unsafe_allow_html=True)
+        
+        if not activa and padre_activo:
+            st.warning(f"⚠️ *Subsección opcional omitida:* '{titulo}' NO se incluirá en el PDF ni en el código LaTeX final.")
+    
+    st.session_state["subsecciones_activas"][subsec_id] = activa and padre_activo
+    return activa and padre_activo
 
-    c_s1, c_s2 = st.columns([3.8, 1.2])
-    with c_s1:
-        activa = st.checkbox(
-            f"📌 **Incluir subsección:** {titulo}",
-            value=val_default,
-            key=key_widget,
-            help=f"Desmarca para quitar la subsección '{titulo}' del documento final. La numeración LaTeX se reajustará automáticamente."
-        )
-    with c_s2:
-        if activa:
-            st.caption("✅ Subsección Activa")
-        else:
-            st.caption("⏸️ Opcional Omitida")
-
-    st.session_state["subsecciones_activas"][subsec_id] = activa
-
-    if not activa:
-        st.warning(f"⚠️ *La subsección '{titulo}' está marcada como opcional y NO se incluirá en el informe compilado.*")
-
-    return activa
 
 def render_boton_agregar_seccion(sec_padre: str, titulo_padre: str):
     """
@@ -315,12 +337,13 @@ def render_boton_agregar_seccion(sec_padre: str, titulo_padre: str):
                                     f_img.write(up_cust_img.getbuffer())
                                 sec_cust["figura_nombre"] = nom_img
                                 st.success(f"✅ Imagen guardada como {nom_img}")
-        
+                
         if indices_a_eliminar:
             for item in indices_a_eliminar:
                 if item in st.session_state["secciones_personalizadas"]:
                     st.session_state["secciones_personalizadas"].remove(item)
             st.rerun()
+
 
 def obtener_diccionario_secciones():
     """Retorna el estado completo de secciones y subsecciones para exportar o compilar."""
@@ -333,18 +356,44 @@ def obtener_diccionario_secciones():
     res["secciones_personalizadas"] = list(st.session_state["secciones_personalizadas"])
     return res
 
+
 def render_resumen_estructura_documento():
     """Panel global para visualizar y configurar rápidamente toda la estructura de secciones y subsecciones."""
     inicializar_estado_secciones()
     ver = obtener_ver()
-    with st.expander("📚 Configuración y Gestión de Secciones y Subsecciones del Documento", expanded=False):
-        st.write(
-            "Aquí puedes activar o desactivar tanto **secciones completas** como **subsecciones específicas** "
-            "de forma opcional, o verificar qué secciones adicionales has agregado al informe."
-        )
+    
+    total_sec = len(SECCIONES_ESTANDAR)
+    activas_sec = sum(1 for sid in SECCIONES_ESTANDAR if st.session_state["secciones_activas"].get(sid, True))
+    total_sub = len(SUBSECCIONES_ESTANDAR)
+    activas_sub = sum(1 for subid in SUBSECCIONES_ESTANDAR if esta_subseccion_activa(subid))
+    
+    st.markdown("### 📚 Gestor Global de Secciones y Subsecciones Opcionales")
+    st.info(
+        f"📊 **Resumen del Documento:** {activas_sec}/{total_sec} Secciones activas | "
+        f"{activas_sub}/{total_sub} Subsecciones activas. "
+        "Puedes desmarcar cualquier sección completa o subsección individual para hacerla opcional y omitirla del PDF."
+    )
+    
+    col_b_act, col_b_des = st.columns([1, 1])
+    with col_b_act:
+        if st.button("✅ Activar Todas las Secciones y Subsecciones", key=f"btn_act_all_{ver}", use_container_width=True):
+            for sid in SECCIONES_ESTANDAR:
+                st.session_state["secciones_activas"][sid] = True
+            for subid in SUBSECCIONES_ESTANDAR:
+                st.session_state["subsecciones_activas"][subid] = True
+            st.rerun()
+    with col_b_des:
+        if st.button("🔄 Restaurar Estado por Defecto", key=f"btn_reset_all_{ver}", use_container_width=True):
+            for sid in SECCIONES_ESTANDAR:
+                st.session_state["secciones_activas"][sid] = True
+            for subid in SUBSECCIONES_ESTANDAR:
+                st.session_state["subsecciones_activas"][subid] = True
+            st.rerun()
+
+    with st.expander("🔍 Explorar Árbol Completo de Secciones y Subsecciones", expanded=True):
         for sec_id, info in SECCIONES_ESTANDAR.items():
             act_sec = st.session_state["secciones_activas"].get(sec_id, True)
-            c1, c2 = st.columns([3.5, 1])
+            c1, c2 = st.columns([3.5, 1.2])
             with c1:
                 nuevo_act_sec = st.checkbox(
                     f"**Sección {info['numero']}: {info['nombre']}**",
@@ -353,8 +402,11 @@ def render_resumen_estructura_documento():
                 )
                 st.session_state["secciones_activas"][sec_id] = nuevo_act_sec
             with c2:
-                st.caption("✅ Activa" if nuevo_act_sec else "⏸️ Omitida")
-
+                if nuevo_act_sec:
+                    st.markdown("<span style='color: #10b981; font-weight: bold;'>✅ Sección Activa</span>", unsafe_allow_html=True)
+                else:
+                    st.markdown("<span style='color: #f59e0b; font-weight: bold;'>⏸️ Omitida</span>", unsafe_allow_html=True)
+            
             # Mostrar las subsecciones de esta sección
             subs_de_sec = [
                 (sid, sinfo) for sid, sinfo in SUBSECCIONES_ESTANDAR.items()
@@ -362,10 +414,10 @@ def render_resumen_estructura_documento():
             ]
             if subs_de_sec:
                 with st.container():
-                    st.markdown("<div style='margin-left: 24px; padding-left: 8px; border-left: 2px solid #334155;'>", unsafe_allow_html=True)
+                    st.markdown("<div style='margin-left: 28px; padding-left: 10px; border-left: 2px solid #3b82f6;'>", unsafe_allow_html=True)
                     for sub_id, sinfo in subs_de_sec:
-                        act_sub = st.session_state["subsecciones_activas"].get(sub_id, True) and nuevo_act_sec
-                        c_s1, c_s2 = st.columns([3.5, 1])
+                        act_sub = esta_subseccion_activa(sub_id) and nuevo_act_sec
+                        c_s1, c_s2 = st.columns([3.5, 1.2])
                         with c_s1:
                             nuevo_act_sub = st.checkbox(
                                 f"Subsección {sinfo['numero']}: {sinfo['nombre']}",
@@ -375,7 +427,11 @@ def render_resumen_estructura_documento():
                             )
                             st.session_state["subsecciones_activas"][sub_id] = nuevo_act_sub
                         with c_s2:
-                            st.caption("Subsección Activa" if nuevo_act_sub else "Omitida")
+                            if not nuevo_act_sec:
+                                st.caption("⏸️ Padre Omitido")
+                            elif nuevo_act_sub:
+                                st.caption("✅ Activa")
+                            else:
+                                st.caption("⏸️ Opcional Omitida")
                     st.markdown("</div>", unsafe_allow_html=True)
-            st.markdown("<hr style='margin: 8px 0; border: none; border-top: 1px solid #1e293b;'>", unsafe_allow_html=True)
-
+            st.markdown("<hr style='margin: 8px 0; border: none; border-top: 1px solid #334155;'>", unsafe_allow_html=True)

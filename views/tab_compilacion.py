@@ -1,6 +1,8 @@
 import streamlit as st
 import os
 from latex_builder import compilar_estudio_latex, generar_codigo_latex
+from secciones_manager import obtener_diccionario_secciones
+
 
 def render(config_vars, resumen_textos, df_control_cambios, texto_supuesto_activo, usar_tabla_upme, df_supuestos_upme, archivo_or_path):
     st.subheader("🚀 Compilación del Estudio en LaTeX / PDF")
@@ -9,9 +11,23 @@ def render(config_vars, resumen_textos, df_control_cambios, texto_supuesto_activ
         "(GD o Autogenerador) con todas las secciones configuradas, secciones opcionales y personalizadas."
     )
 
+    # Asegurar que todas las secciones y subsecciones activas / opcionales estén presentes
+    dict_secciones = obtener_diccionario_secciones()
+    datos_sec_2_3 = st.session_state.get("datos_sec_2_3", {})
+    datos_sec_4_6 = st.session_state.get("datos_sec_4_5_6", {})
+    datos_sec_7 = st.session_state.get("datos_sec_7", {})
+    datos_sec_8 = st.session_state.get("datos_sec_8", {})
+    datos_sec_9_10 = st.session_state.get("datos_sec_9_10", {})
+
     params_finales = {
         **(config_vars or {}),
         **(resumen_textos or {}),
+        **(datos_sec_2_3 or {}),
+        **(datos_sec_4_6 or {}),
+        **(datos_sec_7 or {}),
+        **(datos_sec_8 or {}),
+        **(datos_sec_9_10 or {}),
+        **(dict_secciones or {}),
         "df_control_cambios": df_control_cambios,
         "texto_supuesto_activo": texto_supuesto_activo,
         "usar_tabla_upme": usar_tabla_upme,

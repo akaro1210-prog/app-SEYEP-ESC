@@ -1,21 +1,33 @@
 import streamlit as st
-from secciones_manager import render_control_seccion, render_boton_agregar_seccion
+from secciones_manager import (
+    render_control_seccion,
+    render_control_subseccion,
+    render_boton_agregar_seccion,
+)
+
 
 def render(config_vars=None):
     if config_vars is None:
         config_vars = st.session_state.get("config_vars", {})
+
     tipo_estudio = config_vars.get("tipo_estudio", st.session_state.get("tipo_estudio", "GD"))
     es_autogen = ("autogenerador" in str(tipo_estudio).lower() or bool(config_vars.get("es_autogenerador", False)))
     tag = "Autogenerador" if es_autogen else "GD"
 
     st.subheader(f"📝 Sección 1: Resumen Ejecutivo y Resultados ({tag})")
     
-    # Control de Sección 1 y sus Subsecciones Opcionales (1.1, 1.2, 1.3)
+    # Control general de la Sección 1 completa
     render_control_seccion("sec_1", f"Sección 1: Resumen Ejecutivo y Supuestos ({tag})")
+    
     st.write(
         f"Personaliza los párrafos de introducción, los puntos técnicos del resumen (`\\resumen`) y el párrafo de cierre "
         f"para el régimen de **{tag}**. Puedes usar comandos LaTeX como `\\nombreProyecto` y `\\FechaEntrada`."
     )
+
+    # --- SUBSECCIÓN 1.1 ---
+    st.markdown("---")
+    st.markdown("### 1.1 Objetivo y Alcance")
+    render_control_subseccion("subsec_1_1", "Objetivo y alcance del estudio")
 
     default_intro = (
         r"Para el presente documento se han realizado los siguientes estudios técnicos con el propósito de evaluar la viabilidad del proyecto:"
@@ -57,7 +69,13 @@ def render(config_vars=None):
         height=70
     )
 
+    # --- SUBSECCIÓN 1.3 ---
+    st.markdown("---")
+    st.markdown("### 1.3 Resumen de los Principales Resultados")
+    render_control_subseccion("subsec_1_3", "Resumen de los principales resultados (Flujo, Cortocircuito, Protecciones)")
+
     st.markdown("##### Ítems del comando `\\resumen`")
+
     # Campos editables en Streamlit para los 3 ítems de \resumen
     texto_flujo = st.text_area("Punto 1: Flujo de Carga", value=default_flujo, height=140)
     texto_cortocircuito = st.text_area("Punto 2: Cortocircuito", value=default_cortocircuito, height=100)

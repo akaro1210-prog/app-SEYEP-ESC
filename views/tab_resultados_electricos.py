@@ -1,6 +1,11 @@
 import streamlit as st
 import os
-from secciones_manager import render_control_seccion, render_boton_agregar_seccion
+from secciones_manager import (
+    render_control_seccion,
+    render_control_subseccion,
+    render_boton_agregar_seccion,
+)
+
 
 def guardar_archivo_subido(uploaded_file, nombre_destino):
     """Guarda cualquier imagen subida convirtiéndola a PNG limpio si es necesario."""
@@ -16,12 +21,15 @@ def guardar_archivo_subido(uploaded_file, nombre_destino):
         return True
     return False
 
+
 def estado_archivo(nombre_archivo):
     return "✅ En carpeta" if os.path.exists(nombre_archivo) else "⚠️ Pendiente"
+
 
 def render(config_vars=None):
     if config_vars is None:
         config_vars = st.session_state.get("config_vars", {})
+
     tipo_estudio = config_vars.get("tipo_estudio", st.session_state.get("tipo_estudio", "GD"))
     es_autogen = ("autogenerador" in str(tipo_estudio).lower() or bool(config_vars.get("es_autogenerador", False)))
     tag_plural = "Autogeneradores" if es_autogen else "Generadores Distribuidos (GD)"
@@ -29,10 +37,15 @@ def render(config_vars=None):
     st.subheader("⚡ Sección 7: Resultados de los Análisis Eléctricos")
     st.write("Edita los textos de análisis y sube todas las imágenes de resultados y convenciones de la Sección 7.")
 
-    # Control de Sección 7 y sus Subsecciones 7.1 a 7.6 (Opcional)
+    # Control de Sección 7 completa
     render_control_seccion("sec_7", "Sección 7: Resultados de los Análisis Eléctricos")
 
-    st.markdown("### 7.1 Flujo de carga AC en estado estable")
+    # =========================================================================
+    # SUBSECCIÓN 7.1: FLUJO DE CARGA AC
+    # =========================================================================
+    st.markdown("### 7.1 Flujo de Carga AC en Estado Estable")
+    render_control_subseccion("subsec_7_1", "Flujo de carga AC en estado estable")
+
     default_cargabilidad_txt = (
         r"Como se puede apreciar en la \cref{tab:Cargabilidad} la cargabilidad en la zona de influencia se encuentra acorde "
         r"lo requerido en la normativa CREG 025 de 1995 con valores aceptable menores del 100\%."
@@ -50,7 +63,6 @@ def render(config_vars=None):
         height=90
     )
 
-    st.markdown("#### Imágenes de Convenciones y Resultados de Flujo de Carga (7.1)")
     col_conv1, col_conv2 = st.columns(2)
     with col_conv1:
         up_conv_flujo = st.file_uploader(
@@ -95,9 +107,13 @@ def render(config_vars=None):
         if guardar_archivo_subido(up_perf, "perfiltensionCTO.png"):
             st.success("✅ perfiltensionCTO.png guardado.")
 
+    # =========================================================================
+    # SUBSECCIÓN 7.2: ANÁLISIS DE CONTINGENCIA N-1
+    # =========================================================================
     st.markdown("---")
-    st.markdown("### 7.2 Análisis de contingencia (`\\CONTINGENCIA`)")
-    incluir_contingencia = st.checkbox("Incluir subsección de Análisis de Contingencia en el informe", value=True)
+    st.markdown("### 7.2 Análisis de Contingencia (`\\CONTINGENCIA`)")
+    render_control_subseccion("subsec_7_2", "Análisis de contingencia (N-1)")
+
     default_contingencia_p1 = (
         r"El análisis de contingencias N-1 demuestra que la integración del proyecto \nombreProyecto\ no compromete la seguridad "
         r"ni la confiabilidad del sistema regional. Ante eventos simples en la red adyacente, los perfiles de tensión se mantienen "
@@ -105,6 +121,7 @@ def render(config_vars=None):
         r"inferiores al 28,7\%. Adicionalmente, la Subestación Doradal absorbe las contingencias de forma estable."
     )
     contingencia_p1 = st.text_area("Párrafo principal de Contingencia N-1:", value=default_contingencia_p1, height=100)
+
     default_contingencia_p2 = (
         r"Como se evidencia en la \cref{fig:cargabilidadConti} el sistema incrementa su capacidad para soportar contingencias "
         r"sin superar los límites operativos establecidos, mejorando las condiciones de confiabilidad y flexibilidad operativa del circuito."
@@ -137,8 +154,13 @@ def render(config_vars=None):
         if guardar_archivo_subido(up_diagc, "Diagrama_Contingencia.png"):
             st.success("✅ Diagrama_Contingencia.png guardado.")
 
+    # =========================================================================
+    # SUBSECCIÓN 7.3: CÁLCULO DE PÉRDIDAS
+    # =========================================================================
     st.markdown("---")
-    st.markdown("### 7.3 Cálculo de pérdidas")
+    st.markdown("### 7.3 Cálculo de Pérdidas en el SDL")
+    render_control_subseccion("subsec_7_3", "Cálculo de pérdidas en el SDL")
+
     default_perdidas_analisis = (
         r"El análisis técnico de los escenarios proyectados para \YearInicial\ y \YearFinal\, se evidencia que el incremento más significativo "
         r"se presenta en el escenario de Hora 12, alcanzando deltas de 25,97 kW (\YearInicial) y 25,90 kW (\YearFinal); este comportamiento "
@@ -149,6 +171,7 @@ def render(config_vars=None):
         r"evita el transporte prolongado de corriente y confirma que la integración de los proyectos no genera un impacto negativo ni degradante sobre la operación habitual del SDL."
     )
     sec7_perdidas_texto = st.text_area("Párrafo de análisis de pérdidas:", value=default_perdidas_analisis, height=140)
+
     up_perd = st.file_uploader(
         f"Tabla 15: 'perdidas.png' ({estado_archivo('perdidas.png')})",
         type=["png", "jpg", "jpeg"],
@@ -157,8 +180,13 @@ def render(config_vars=None):
     if guardar_archivo_subido(up_perd, "perdidas.png"):
         st.success("✅ perdidas.png guardado.")
 
+    # =========================================================================
+    # SUBSECCIONES 7.4, 7.5 y 7.6
+    # =========================================================================
     st.markdown("---")
-    st.markdown("### 7.4 Cortocircuito, 7.5 Calidad de Potencia y 7.6 Funcionamiento en Isla")
+    st.markdown("### 7.4 Cortocircuito (IEC 60909)")
+    render_control_subseccion("subsec_7_4", "Verificación de corrientes de cortocircuito (IEC 60909)")
+
     col_cc1, col_cc2 = st.columns(2)
     with col_cc1:
         up_ley_cortos = st.file_uploader(
@@ -177,6 +205,14 @@ def render(config_vars=None):
         if guardar_archivo_subido(up_cortos, "cortos.png"):
             st.success("✅ cortos.png guardado.")
 
+    st.markdown("---")
+    st.markdown("### 7.5 Calidad de Potencia (IEEE 1547)")
+    render_control_subseccion("subsec_7_5", "Calidad de potencia (IEEE 1547 y Circular CREG 021)")
+
+    st.markdown("---")
+    st.markdown("### 7.6 Análisis de Funcionamiento en Isla")
+    render_control_subseccion("subsec_7_6", "Análisis para evitar funcionamiento en isla no intencional")
+
     default_isla_conclusion = (
         r"La Ecuación \eqref{eq:balance_potencia} arroja un resultado donde la potencia instalada acumulada más la capacidad del proyecto "
         r"supera la demanda mínima del circuito, confirmando la existencia de riesgo de funcionamiento en isla no intencional ante contingencias "
@@ -193,7 +229,7 @@ def render(config_vars=None):
     datos = {
         "sec7_cargabilidad_txt": sec7_cargabilidad_txt,
         "conclusion_perfiles_carga": conclusion_perfiles_carga,
-        "incluir_contingencia": incluir_contingencia,
+        "incluir_contingencia": True,
         "contingencia_p1": contingencia_p1,
         "contingencia_p2": contingencia_p2,
         "sec7_perdidas_texto": sec7_perdidas_texto,
