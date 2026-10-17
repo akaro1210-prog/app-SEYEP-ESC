@@ -140,7 +140,7 @@ def render():
         )
 
     with st.expander("⚙️ Parámetros Adicionales y Opcionales de Encabezado LaTeX"):
-        c_o1, c_o2, c_o3 = st.columns(3)
+        c_o1, c_o2 = st.columns(2)
         with c_o1:
             latitud = st.text_input("Latitud (\\Latitud):", value=obtener_val("Latitud", '5°53\'49.8"N'), key=f"esc_v_lat_{ver}")
             longitud = st.text_input("Longitud (\\Longitud):", value=obtener_val("Longitud", '74°45\'12.9"W'), key=f"esc_v_lon_{ver}")
@@ -149,11 +149,7 @@ def render():
             referencia_panel = st.text_input("Referencia Paneles (\\referenciaPanel):", value=obtener_val("referenciaPanel", "JAM66D45 625 LB"), key=f"esc_v_rpan_{ver}")
             potencia_panel = st.text_input("Potencia Paneles (\\potenciaPanel):", value=obtener_val("potenciaPanel", "625 Wp"), key=f"esc_v_ppan_{ver}")
             cantidad_panel = st.text_input("Cantidad Paneles (\\cantidadPanel):", value=obtener_val("cantidadPanel", "1760"), key=f"esc_v_cpan_{ver}")
-        with c_o3:
-            ref_inversor_uno = st.text_input("Referencia Inversor 1 (\\refInversoruno):", value=obtener_val("refInversoruno", "Inversor 150 kW On-Grid."), key=f"esc_v_rinv_{ver}")
-            inversor_uno = st.text_input("Modelo Inversor 1 (\\Inversoruno):", value=obtener_val("Inversoruno", "Growat MAX 150KTL3-X2MV"), key=f"esc_v_inv_{ver}")
-            cantidad_inversor_uno = st.text_input("Cantidad Inversor 1 (\\cantidadInversoruno):", value=obtener_val("cantidadInversoruno", "6 Und."), key=f"esc_v_cinv_{ver}")
-            generacion_aprobada = st.text_input("Generación Aprobada (\\generacionaprobada):", value=obtener_val("generacionaprobada", "900kW"), key=f"esc_v_gena_{ver}")
+
 
     config_vars = {
         "tipo_estudio": tipo_estudio_clave,
