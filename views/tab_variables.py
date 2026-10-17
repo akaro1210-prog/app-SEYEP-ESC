@@ -152,6 +152,7 @@ def render():
         with c_o3:
             ref_inversor_uno = st.text_input("Referencia Inversor 1 (\\refInversoruno):", value=obtener_val("refInversoruno", "Inversor 150 kW On-Grid."), key=f"esc_v_rinv_{ver}")
             inversor_uno = st.text_input("Modelo Inversor 1 (\\Inversoruno):", value=obtener_val("Inversoruno", "Growat MAX 150KTL3-X2MV"), key=f"esc_v_inv_{ver}")
+            cantidad_inversor_uno = st.text_input("Cantidad Inversor 1 (\\cantidadInversoruno):", value=obtener_val("cantidadInversoruno", " Und."), key=f"v_cinv_{ver}")
             generacion_aprobada = st.text_input("Generación Aprobada (\\generacionaprobada):", value=obtener_val("generacionaprobada", "900kW"), key=f"esc_v_gena_{ver}")
 
     config_vars = {
