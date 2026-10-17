@@ -156,7 +156,6 @@ def render():
             generacion_aprobada = st.text_input("Generación Aprobada (\\generacionaprobada):", value=obtener_val("generacionaprobada", "900kW"), key=f"esc_v_gena_{ver}")
 
     config_vars = {
-
         "tipo_estudio": tipo_estudio_clave,
         "es_autogenerador": es_autogenerador,
         "etiqueta_desc": etiqueta_desc,
