@@ -140,7 +140,7 @@ def render():
         )
 
     with st.expander("⚙️ Parámetros Adicionales y Opcionales de Encabezado LaTeX"):
-        c_o1, c_o2 = st.columns(2)
+        c_o1, c_o2, c_o3 = st.columns(3)
         with c_o1:
             latitud = st.text_input("Latitud (\\Latitud):", value=obtener_val("Latitud", '5°53\'49.8"N'), key=f"esc_v_lat_{ver}")
             longitud = st.text_input("Longitud (\\Longitud):", value=obtener_val("Longitud", '74°45\'12.9"W'), key=f"esc_v_lon_{ver}")
@@ -149,6 +149,7 @@ def render():
             referencia_panel = st.text_input("Referencia Paneles (\\referenciaPanel):", value=obtener_val("referenciaPanel", "JAM66D45 625 LB"), key=f"esc_v_rpan_{ver}")
             potencia_panel = st.text_input("Potencia Paneles (\\potenciaPanel):", value=obtener_val("potenciaPanel", "625 Wp"), key=f"esc_v_ppan_{ver}")
             cantidad_panel = st.text_input("Cantidad Paneles (\\cantidadPanel):", value=obtener_val("cantidadPanel", "1760"), key=f"esc_v_cpan_{ver}")
+        with c_o3:
 
 
     config_vars = {
