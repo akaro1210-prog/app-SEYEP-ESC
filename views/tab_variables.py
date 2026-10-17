@@ -155,7 +155,7 @@ def render():
             cantidad_inversor_uno = st.text_input("Cantidad Inversor 1 (\\cantidadInversoruno):", value=obtener_val("cantidadInversoruno", "6 Und."), key=f"esc_v_cinv_{ver}")
             generacion_aprobada = st.text_input("Generación Aprobada (\\generacionaprobada):", value=obtener_val("generacionaprobada", "900kW"), key=f"esc_v_gena_{ver}")
 
-    config_vars = {}
+    config_vars = {
     _, config_vars["mesentregaiformemasyear"] = crear_fila_variable("mesentregaiformemasyear", "Mes y año entrega del informe", "Septiembre, 2026")
     _, config_vars["nombreProyecto"] = crear_fila_variable("nombreProyecto", "Nombre del proyecto", "Arboreo")
     _, config_vars["capacidadMW"] = crear_fila_variable("capacidadMW", "Capacidad del proyecto", "900kW")
@@ -194,7 +194,7 @@ def render():
     _, config_vars["tipoproteccion"] = crear_fila_variable("tipoproteccion", "Tipo de elemento que protege", "Reconectador")
     _, config_vars["recocabecera"] = crear_fila_variable("recocabecera", "Protección del OR cabecera", "")
 
-    
+    }
 
     st.markdown("---")
     render_resumen_estructura_documento()
