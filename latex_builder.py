@@ -1564,6 +1564,8 @@ La información requerida para el modelamiento del área de influencia fue sumin
         Capacidad del Proyecto (kWac) & \capacidadMW\ \\ \hline
         Vida Útil & {vida_util} \\ \hline
         Tipo de Fuente & {tipo_fuente} \\ \hline
+        Módulos & \referenciaPanel\ \\ \hline
+        Inversores & \refInversoruno\ \\ \hline
         Transformador & 1.0 MVA (Dyn5) \\ \hline
         Red de Distribución (OR) & \OR\ \\ \hline
         Subestación de Conexión & \SSEE\ \\ \hline
