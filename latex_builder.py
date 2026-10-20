@@ -60,10 +60,17 @@ def incluir_imagen_segura(nombre_archivo, opciones="width=0.8\\textwidth"):
     """
     Si la imagen existe en disco (exacta o equivalente), inserta \\includegraphics.
     Si aún no se ha cargado, inserta un recuadro de marcador en el PDF para que pdflatex NO falle.
+    Normaliza claves como 'max width' y 'max height' a claves nativas de graphicx (width, height)
+    para evitar el error de xkeyval / Gin si adjustbox no tiene la opción [export].
     """
+    opciones_norm = (
+        str(opciones)
+        .replace("max width=", "width=")
+        .replace("max height=", "height=")
+    )
     ruta_resuelta = resolver_ruta_imagen(nombre_archivo)
     if ruta_resuelta:
-        return f"\\includegraphics[{opciones}]{{{ruta_resuelta}}}"
+        return f"\\includegraphics[{opciones_norm}]{{{ruta_resuelta}}}"
     nombre_limpio = escapar_latex(os.path.basename(str(nombre_archivo).strip()))
     return (
         f"\\fbox{{\\parbox{{0.85\\textwidth}}{{\\centering\\vspace{{0.5cm}}"
@@ -219,7 +226,7 @@ def generar_bloque_tabla_supuestos(usar_tabla_upme, df_supuestos_upme, archivo_o
 \\caption{{{caption_limpio}}}
 \\label{{tab:UPME}}
 \\vspace{{0.2cm}}
-\\includegraphics[max width=\\textwidth, max height=0.65\\textheight, keepaspectratio]{{{ruta_latex}}}
+\\includegraphics[width=\\textwidth, height=0.65\\textheight, keepaspectratio]{{{ruta_latex}}}
 \\end{{table}}
 """
         elif ext in [".xlsx", ".xls"]:
@@ -318,7 +325,7 @@ def generar_preambulo():
 \usepackage{etoolbox}
 \usepackage{amsmath}
 \usepackage{pgfplotstable}
-\usepackage{adjustbox}      
+\usepackage[export]{adjustbox}      
 \usepackage{longtable}
 
 % --- Parche obligatorio completo para errores de expl3, array y colortbl ---
