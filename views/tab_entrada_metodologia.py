@@ -113,8 +113,28 @@ def render():
     )
     sec5_intro = st.text_area("Párrafo introductorio Sección 5 (Metodología):", value=default_sec5_intro, height=80)
 
+    with st.expander("Ver / Editar Criterios Técnicos Normativos (5.1)", expanded=False):
+        default_sec5_1 = (
+            r"Para garantizar una conexión y operación que cumpla los criterios técnicos de calidad, seguridad y confiabilidad, en el diseño, ejecución y mantenimiento del proyecto se realiza este estudio bajo las siguientes normativas colombianas. \begin{itemize} \item Reglamento técnico de instalaciones eléctricas (RETIE).\item Circular CREG 021 de 2022.\item Circular CREG 174 de 2021.\item Circular CREG 015 de 2018.\item Circular CREG 025 de 1995.\\\end{itemize}Teniendo en cuenta las anteriores normativas se establece algunos de los criterios y límites para tener en cuenta dentro de este documento.\\\begin{itemize} \item CREG 025 de 1995, “El STN se planeará de tal forma que permita, en conjunto con la generación, los sistemas de transmisión regionales y los sistemas de distribución local, Asegurar que la tensión en las barras de carga a nivel de 220 kV y superiores no sea inferior al 90\% del valor nominal, ni superior al 110\%”.\item Circular CREG 174 de 2021, en caso de implementar inversores en los proyectos, la capacidad del proyecto corresponde a la sumatoria de las capacidades nominales de los inversores, en el lado con conexión al SIN, la capacidad se deberá asumir con un factor de potencia unitario. \item Circular CREG 025 de 1995, Para las líneas de transmisión se consideran flujos aceptables, en condiciones normales de operación, cuando sean iguales o menores del 100\% de su capacidad nominal. En contingencia se admiten sobrecargas hasta el valor máximo permitido para el elemento bajo condiciones de emergencia y que se encuentra declarado por el agente propietario en el PARATEC. \item Para transformadores se consideran flujos aceptables en condiciones normales de operación, cuando sean iguales o menores del 100\% de su capacidad nominal. En contingencia se admiten sobrecargas hasta el valor máximo permitido para el elemento bajo condiciones de emergencia y que se encuentra declarado por el agente propietario en el PARATEC.\item Artículo 5 de la resolución CREG 030 de 2018, Literal a, Literal c, “La Cantidad de energía en una hora se pueden entregar los GD o AGEP que entregan energía a la red, cuyo sistema de producción de energía sea el compuesto por fotovoltaico sin capacidad de almacenamiento, conectados al mismo circuito o transformador del nivel de tensión 1, no debe superar el 50\% de promedio anual de las horas de mínima demandad diaria de energía registradas para el año anterior al de solicitud de conexión en la franja horaria comprometida entre 6 am y 6 pm.”\end{itemize}"
+        )
+        sec5_1_texto = st.text_area("Texto normativo CREG/RETIE (5.1):", value=default_sec5_1, height=140)
+
     st.markdown("### 5.2 Descripción de los Análisis a Realizar")
     render_control_subseccion("subsec_5_2", "Descripción de los análisis a realizar (Flujo, Cortocircuito, Protecciones)")
+
+    with st.expander("Ver / Editar Descripción de los Análisis Técnicos (5.2)", expanded=False):
+        default_sec5_2 = (
+            r"En el presente estudio de conexión se realizan los siguientes análisis técnicos del proyecto solar fotovoltaico de generación y consumo:\\"
+            r"A continuación, se instalan los estudios realizados: \begin{itemize}"
+            r"    \item \textbf{Generación de energía eléctrica:} proyección de la máxima generación del proyecto solar a la red de distribución de energía eléctrica propiedad OR."
+            r"    \item \textbf{Consumo de la instalación eléctrica:} Estimado de la energía requerida por el cliente OR."
+            r"    \item \textbf{Estudio de flujo de carga:} Monitorear los niveles de tensión en las barras; así como la cargabilidad en transformadores y líneas de transmisión para que no sobrepasen los límites permitidos."
+            r"    \item \textbf{Estudio de pérdidas:} Analizar las pérdidas del sistema de distribución locas (SDL) con la inclusión del proyecto de generación."
+            r"    \item \textbf{Estudio de cortocircuito:} Monitorear los aportes de corriente de cortocircuito en las subestaciones, así como monitorear que estas no se sobrepasen los niveles máximos de corto en las subestaciones del sistema."
+            r"    \item \textbf{Estudio de protecciones:} Analizar el comportamiento de las protecciones del OR en conjunto con las del proyecto de generación para diferentes eventos en el SDL, buscando garantizar selectividad y confiabilidad."
+            r"\end{itemize}"
+        )
+        sec5_2_texto = st.text_area("Texto de estudios técnicos a realizar (5.2):", value=default_sec5_2, height=140)
 
     # Botón para agregar secciones adicionales en Sección 5
     render_boton_agregar_seccion("sec_5", "Sección 5 (Metodología)")
@@ -155,6 +175,8 @@ def render():
         "caption_curva_cto": caption_curva_cto,
         "sec4_4_comp": sec4_4_comp,
         "sec5_intro": sec5_intro,
+        "sec5_1_texto": sec5_1_texto,
+        "sec5_2_texto": sec5_2_texto,
         "sec6_despacho": sec6_despacho,
         "sec6_gen_max": sec6_gen_max
     }

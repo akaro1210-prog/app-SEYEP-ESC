@@ -1,9 +1,21 @@
 import streamlit as st
-from project_manager import (
-    activar_persistencia_automatica,
-    exportar_proyecto_esc,
-    importar_proyecto_esc,
-)
+try:
+    from project_manager import (
+        activar_persistencia_automatica,
+        exportar_proyecto_esc,
+        importar_proyecto_esc,
+        exportar_proyecto_json,
+        importar_proyecto_json,
+    )
+except ImportError:
+    from project_manager import (
+        activar_persistencia_automatica,
+        exportar_proyecto_esc,
+        importar_proyecto_esc,
+    )
+    exportar_proyecto_json = exportar_proyecto_esc
+    importar_proyecto_json = importar_proyecto_esc
+
 from secciones_manager import obtener_diccionario_secciones
 
 # Activar persistencia automática para todas las pestañas de views/

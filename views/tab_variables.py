@@ -140,20 +140,88 @@ def render():
         )
 
     with st.expander("⚙️ Parámetros Adicionales y Opcionales de Encabezado LaTeX"):
-        c_o1, c_o2, c_o3 = st.columns(3)
+        c_o1, c_o2 = st.columns(2)
         with c_o1:
             latitud = st.text_input("Latitud (\\Latitud):", value=obtener_val("Latitud", '5°53\'49.8"N'), key=f"esc_v_lat_{ver}")
             longitud = st.text_input("Longitud (\\Longitud):", value=obtener_val("Longitud", '74°45\'12.9"W'), key=f"esc_v_lon_{ver}")
             elemento_proteccion = st.text_input("Elemento Protección (\\elementoProteccion):", value=obtener_val("elementoProteccion", "211-11"), key=f"esc_v_elpr_{ver}")
+            generacion_aprobada = st.text_input("Generación Aprobada (\\generacionaprobada):", value=obtener_val("generacionaprobada", "900kW"), key=f"esc_v_gena_{ver}")
         with c_o2:
             referencia_panel = st.text_input("Referencia Paneles (\\referenciaPanel):", value=obtener_val("referenciaPanel", "JAM66D45 625 LB"), key=f"esc_v_rpan_{ver}")
             potencia_panel = st.text_input("Potencia Paneles (\\potenciaPanel):", value=obtener_val("potenciaPanel", "625 Wp"), key=f"esc_v_ppan_{ver}")
             cantidad_panel = st.text_input("Cantidad Paneles (\\cantidadPanel):", value=obtener_val("cantidadPanel", "1760"), key=f"esc_v_cpan_{ver}")
-        with c_o3:
-            ref_inversor_uno = st.text_input("Referencia Inversor 1 (\\refInversoruno):", value=obtener_val("refInversoruno", "Inversor 150 kW On-Grid."), key=f"esc_v_rinv_{ver}")
-            inversor_uno = st.text_input("Modelo Inversor 1 (\\Inversoruno):", value=obtener_val("Inversoruno", "Growat MAX 150KTL3-X2MV"), key=f"esc_v_inv_{ver}")
-            cantidad_inversor_uno = st.text_input("Cantidad Inversor 1 (\\cantidadInversoruno):", value=obtener_val("cantidadInversoruno", " Und."), key=f"v_cinv_{ver}")
-            generacion_aprobada = st.text_input("Generación Aprobada (\\generacionaprobada):", value=obtener_val("generacionaprobada", "900kW"), key=f"esc_v_gena_{ver}")
+
+        st.markdown("---")
+        st.markdown("#### ☀️ Inversores Fotovoltaicos del Proyecto")
+        st.caption("Configura las referencias, modelos y cantidades de los inversores. Puedes agregar múltiples unidades usando el botón **➕ Agregar Inversor**.")
+
+        if "inv_items_esc" not in st.session_state:
+            inv1_ref = obtener_val("refInversoruno", "Inversor 150 kW On-Grid.")
+            inv1_mod = obtener_val("Inversoruno", "Growat MAX 150KTL3-X2MV")
+            inv1_cant = obtener_val("cantidadInversoruno", "6 Und.")
+            st.session_state["inv_items_esc"] = [
+                {"ref": inv1_ref, "modelo": inv1_mod, "cantidad": inv1_cant}
+            ]
+            if "inv_items" in st.session_state and isinstance(st.session_state["inv_items"], list) and len(st.session_state["inv_items"]) > 0:
+                st.session_state["inv_items_esc"] = [dict(x) for x in st.session_state["inv_items"]]
+
+        palabras_num = ["uno", "dos", "tres", "cuatro", "cinco", "seis", "siete", "ocho", "nueve", "diez"]
+        inversores_actuales = st.session_state.get("inv_items_esc", [])
+        if not inversores_actuales:
+            inversores_actuales = [{"ref": "Inversor 150 kW On-Grid.", "modelo": "Growat MAX 150KTL3-X2MV", "cantidad": "6 Und."}]
+
+        nuevos_inv_items = []
+        for idx, inv in enumerate(inversores_actuales):
+            pal = palabras_num[idx] if idx < len(palabras_num) else f"_{idx+1}"
+            num_mostrar = idx + 1
+            st.markdown(f"**Inversor {num_mostrar}:**")
+            if len(inversores_actuales) > 1:
+                ci1, ci2, ci3, ci4 = st.columns([4, 4, 3, 1])
+            else:
+                ci1, ci2, ci3 = st.columns([4, 4, 3])
+
+            with ci1:
+                r_val = st.text_input(
+                    f"Referencia Inversor {num_mostrar} (\\refInversor{pal}):",
+                    value=inv.get("ref", f"Inversor {num_mostrar}"),
+                    key=f"esc_v_rinv_{idx}_{ver}"
+                )
+            with ci2:
+                m_val = st.text_input(
+                    f"Modelo Inversor {num_mostrar} (\\Inversor{pal}):",
+                    value=inv.get("modelo", f"Modelo {num_mostrar}"),
+                    key=f"esc_v_inv_{idx}_{ver}"
+                )
+            with ci3:
+                c_val = st.text_input(
+                    f"Cantidad Inversor {num_mostrar} (\\cantidadInversor{pal}):",
+                    value=inv.get("cantidad", "1 Und."),
+                    key=f"esc_v_cinv_{idx}_{ver}"
+                )
+            if len(inversores_actuales) > 1:
+                with ci4:
+                    st.write("")
+                    st.write("")
+                    if st.button("🗑️", key=f"btn_del_inv_{idx}_{ver}", help=f"Eliminar Inversor {num_mostrar}"):
+                        st.session_state["inv_items_esc"].pop(idx)
+                        st.rerun()
+            nuevos_inv_items.append({"ref": r_val, "modelo": m_val, "cantidad": c_val})
+
+        st.session_state["inv_items_esc"] = nuevos_inv_items
+        st.session_state["inv_items"] = nuevos_inv_items
+
+        if st.button("➕ Agregar Inversor", key=f"btn_add_inv_esc_{ver}", type="secondary"):
+            n_num = len(nuevos_inv_items) + 1
+            st.session_state["inv_items_esc"].append({
+                "ref": f"Inversor {n_num} On-Grid.",
+                "modelo": f"Growat / Inversor {n_num}",
+                "cantidad": "1 Und."
+            })
+            st.rerun()
+
+    ref_inversor_uno = nuevos_inv_items[0]["ref"] if nuevos_inv_items else "Inversor 150 kW On-Grid."
+    inversor_uno = nuevos_inv_items[0]["modelo"] if nuevos_inv_items else "Growat MAX 150KTL3-X2MV"
+    cantidad_inversor_uno = nuevos_inv_items[0]["cantidad"] if nuevos_inv_items else "6 Und."
 
     config_vars = {
         "tipo_estudio": tipo_estudio_clave,
@@ -183,9 +251,19 @@ def render():
         "refInversoruno": ref_inversor_uno,
         "Inversoruno": inversor_uno,
         "cantidadInversoruno": cantidad_inversor_uno,
+        "inv_items": nuevos_inv_items,
         "generacionaprobada": generacion_aprobada,
         "normaCNO": norma_cno,
     }
+
+    for idx, item in enumerate(nuevos_inv_items):
+        pal = palabras_num[idx] if idx < len(palabras_num) else f"_{idx+1}"
+        config_vars[f"refInversor{pal}"] = item["ref"]
+        config_vars[f"Inversor{pal}"] = item["modelo"]
+        config_vars[f"cantidadInversor{pal}"] = item["cantidad"]
+        config_vars[f"refInversor{idx+1}"] = item["ref"]
+        config_vars[f"Inversor{idx+1}"] = item["modelo"]
+        config_vars[f"cantidadInversor{idx+1}"] = item["cantidad"]
 
     st.markdown("---")
     render_resumen_estructura_documento()

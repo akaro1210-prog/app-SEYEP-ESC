@@ -62,23 +62,37 @@ def render(config_vars=None):
     with col_p3:
         prot_cant = st.text_input("Cantidad interruptor:", value="1 Und.")
 
-    st.markdown("#### Configuración de Inversores (1 a 3 referencias)")
-    num_inversores = st.selectbox("Cantidad de referencias de inversores en el proyecto:", [1, 2, 3], index=0)
+    st.markdown("#### Configuración de Inversores del Proyecto")
+    inversores_en_variables = st.session_state.get("inv_items_esc") or st.session_state.get("inv_items")
     inv_items = []
-    defaults_inv = [
-        ("Inversor 150 kW On-Grid.", "Growat MAX 150KTL3-X2MV", "6 Und."),
-        ("Inversor 50 kW On-Grid.", "Huawei Sun2000 50KTL-M3", "1 Und."),
-        ("Inversor 40 kW On-Grid.", "Huawei Sun2000 40KTL-M3", "1 Und.")
-    ]
-    for i in range(num_inversores):
-        c1, c2, c3 = st.columns(3)
-        with c1:
-            ref_i = st.text_input(f"Referencia Inversor {i+1}:", value=defaults_inv[i][0], key=f"ref_inv_{i}")
-        with c2:
-            mod_i = st.text_input(f"Modelo Inversor {i+1}:", value=defaults_inv[i][1], key=f"mod_inv_{i}")
-        with c3:
-            cant_i = st.text_input(f"Cantidad Inversor {i+1}:", value=defaults_inv[i][2], key=f"cant_inv_{i}")
-        inv_items.append({"ref": ref_i, "modelo": mod_i, "cantidad": cant_i})
+    if inversores_en_variables and isinstance(inversores_en_variables, list) and len(inversores_en_variables) > 0:
+        st.caption("Sincronizado con los inversores configurados en la pestaña **Variables**:")
+        for i, itm in enumerate(inversores_en_variables):
+            c1, c2, c3 = st.columns(3)
+            with c1:
+                ref_i = st.text_input(f"Referencia Inversor {i+1}:", value=itm.get("ref", f"Inversor {i+1}"), key=f"ref_inv_{i}")
+            with c2:
+                mod_i = st.text_input(f"Modelo Inversor {i+1}:", value=itm.get("modelo", f"Modelo {i+1}"), key=f"mod_inv_{i}")
+            with c3:
+                cant_i = st.text_input(f"Cantidad Inversor {i+1}:", value=itm.get("cantidad", "1 Und."), key=f"cant_inv_{i}")
+            inv_items.append({"ref": ref_i, "modelo": mod_i, "cantidad": cant_i})
+    else:
+        num_inversores = st.selectbox("Cantidad de referencias de inversores en el proyecto:", [1, 2, 3, 4, 5], index=0)
+        defaults_inv = [
+            ("Inversor 150 kW On-Grid.", "Growat MAX 150KTL3-X2MV", "6 Und."),
+            ("Inversor 50 kW On-Grid.", "Huawei Sun2000 50KTL-M3", "1 Und."),
+            ("Inversor 40 kW On-Grid.", "Huawei Sun2000 40KTL-M3", "1 Und.")
+        ]
+        for i in range(num_inversores):
+            c1, c2, c3 = st.columns(3)
+            def_val = defaults_inv[i] if i < len(defaults_inv) else (f"Inversor {i+1}", f"Modelo {i+1}", "1 Und.")
+            with c1:
+                ref_i = st.text_input(f"Referencia Inversor {i+1}:", value=def_val[0], key=f"ref_inv_{i}")
+            with c2:
+                mod_i = st.text_input(f"Modelo Inversor {i+1}:", value=def_val[1], key=f"mod_inv_{i}")
+            with c3:
+                cant_i = st.text_input(f"Cantidad Inversor {i+1}:", value=def_val[2], key=f"cant_inv_{i}")
+            inv_items.append({"ref": ref_i, "modelo": mod_i, "cantidad": cant_i})
 
     default_sec2_cierre = (
         r"Finalmente, para la contextualización general del proyecto se presenta la \cref{fig:ubicacion}, donde se resalta la ubicación de este."

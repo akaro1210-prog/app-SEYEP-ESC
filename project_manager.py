@@ -195,3 +195,7 @@ def importar_proyecto_esc(uploaded_json_file):
                 pass
 
     st.session_state["esc_ver_import"] = st.session_state.get("esc_ver_import", 0) + 1
+
+# Alias universales y compatibilidad hacia atrás
+exportar_proyecto_json = exportar_proyecto_esc
+importar_proyecto_json = importar_proyecto_esc
