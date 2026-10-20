@@ -1002,12 +1002,12 @@ En la \cref{{fig:georeferencia}}, se presenta el diagrama eléctrico geoespacial
             texto_equipos = rf"Sumado a {str_invs}, con su tensión y frecuencia de operación nominal para integración al sistema. En las {str_figs}, se aprecian las características operativas de los inversores instalados en el sistema de generación."
     img_ficha_panel = incluir_imagen_segura("Ficha panel.png", "max width=\\textwidth, max height=0.65\\textheight, keepaspectratio")
     default_sec3_or_texto = (
-        rf"El proyecto {sigla_proyecto} \nombreProyecto\ se conectará al circuito \CTO\, por tanto, el OR suministro a través de los insumos datos de red de todo el circuito y ajuste de coordinación de protecciones."
+        rf"El proyecto {sigla_proyecto} \nombreProyecto\ se conectará al circuito \CTO, por tanto, el OR suministro a través de los insumos datos de red de todo el circuito y ajuste de coordinación de protecciones."
     )
     sec3_or_texto = adaptar_texto_regimen(params.get("sec3_or_texto", default_sec3_or_texto), es_autogenerador)
     usar_equivalente_png = params.get("usar_equivalente_png", True)
     if usar_equivalente_png:
-        img_eq_red = incluir_imagen_segura("equivalentered.png", "max height=0.28\\textheight, max width=\\textwidth, keepaspectratio")
+        img_eq_red = incluir_imagen_segura("equivalentered.png", "height=0.28\\textheight, width=\\textwidth, keepaspectratio")
         bloque_eq_red = rf"""
 \begin{{table}}[H]
     \centering
@@ -1037,7 +1037,8 @@ En la \cref{{fig:georeferencia}}, se presenta el diagrama eléctrico geoespacial
         f"cargascto{year_final}.csv"
     )
 
-    bloque_informacion_or = rf"""\cref{{tab:equivalentered,tab:cargascto{year_inicial},tab:cargascto{year_final}}}
+    bloque_informacion_or = rf"""\cref{{tab:equivalentered,tab:cargascto{year_inicial},tab:cargascto{year_final}}}.
+\par
 {bloque_eq_red}
 {csv_cargas_ini}
 {csv_cargas_fin}
@@ -1775,7 +1776,7 @@ En la \cref{{fig:fichapanel}}, se puede apreciar las características técnicas 
     subsec_3_2_tex = rf"""\subsection{{\textit{{Información OR}}}}
 {sec3_or_texto}\\
 \\
-Dado lo anterior, la información suministrada se puede apreciar en las  \informacionOR\ 
+Dado lo anterior, la información suministrada se puede apreciar en las \informacionOR
 """ if incluir_subsec_3_2 else ""
 
     bloque_s3 = rf"""% =====================================================================

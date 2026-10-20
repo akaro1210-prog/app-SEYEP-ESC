@@ -153,7 +153,7 @@ def render(config_vars=None):
     render_control_subseccion("subsec_3_2", "Información del Operador de Red (Equivalente de Red y Cargas)")
 
     default_sec3_or_texto = (
-        rf"El proyecto {tag} \nombreProyecto\ se conectará al circuito \CTO\, por tanto, el OR suministro a través de los insumos "
+        rf"El proyecto {tag} \nombreProyecto\ se conectará al circuito \CTO, por tanto, el OR suministro a través de los insumos "
         r"datos de red de todo el circuito y ajuste de coordinación de protecciones."
     )
     sec3_or_texto = st.text_area("Párrafo introductorio Sección 3.2 (Información OR):", value=default_sec3_or_texto, height=80)
