@@ -1,197 +1,117 @@
 import json
 import os
-import glob
 import base64
 import pandas as pd
 import streamlit as st
 
-# Guardamos referencias originales de los widgets de Streamlit
-_ORIG_TEXT_INPUT = st.text_input
-_ORIG_TEXT_AREA = st.text_area
-_ORIG_CHECKBOX = st.checkbox
-_ORIG_RADIO = st.radio
-_ORIG_DATA_EDITOR = st.data_editor
-_PATCH_APLICADO = False
-
-IMAGENES_EXCLUIDAS = {"encabezado.png", "piedepagina.png"}
+IMAGENES_PROYECTO = [
+    "Logo_Cliente.png",
+    "Proteccion27-59.png",
+    "ICC 1F GCP.png",
+    "ICC 1F GSP.png",
+    "ICC 3F GCP.png",
+    "ICC 3F GSP.png",
+    "Protecciones falla lado alta proyecto.png",
+    "Protecciones falla 1F franca lado alta proyecto.png",
+    "Protecciones falla 1F 5ohms lado alta proyecto.png",
+    "Protecciones falla 1F 15ohms lado alta proyecto.png",
+    "Protecciones falla 1F 30ohms lado alta proyecto.png",
+    "Protecciones falla 3F franca lado alta proyecto.png",
+    "Protecciones falla 3F 5ohms lado alta proyecto.png",
+    "Protecciones falla 3F 15ohms lado alta proyecto.png",
+    "Protecciones falla 3F 30ohms lado alta proyecto.png",
+    "Protecciones falla lado baja proyecto.png",
+    "Protecciones falla 1F franca lado baja proyecto.png",
+    "Protecciones falla 3F franca lado baja proyecto.png",
+    "Protecciones falla nodo conexión proyecto.png",
+    "Protecciones falla 1F franca nodo conexión proyecto.png",
+    "Protecciones falla 1F 5ohms nodo conexión proyecto.png",
+    "Protecciones falla 1F 15ohms nodo conexión proyecto.png",
+    "Protecciones falla 1F 30ohms nodo conexión proyecto.png",
+    "Protecciones falla 3F franca nodo conexión proyecto.png",
+    "Protecciones falla 3F 5ohms nodo conexión proyecto.png",
+    "Protecciones falla 3F 15ohms nodo conexión proyecto.png",
+    "Protecciones falla 3F 30ohms nodo conexión proyecto.png",
+]
 
 def obtener_ver():
-    return st.session_state.get("esc_ver_import", 0)
+    return st.session_state.get("ver_import", 0)
 
 def obtener_val(clave, default):
-    """Obtiene el valor guardado de un proyecto importado o devuelve el default."""
-    cargados = st.session_state.get("esc_params_cargados", {})
-    if isinstance(cargados, dict) and clave in cargados and cargados[clave] is not None:
-        return cargados[clave]
-    widgets = st.session_state.get("esc_widgets_cargados", {})
-    for w_k, w_v in widgets.items():
-        if w_k.endswith(f"::{clave}") or w_k.endswith(f"::{clave}:") or w_k == clave:
-            if w_v is not None:
-                return w_v
+    """Obtiene el valor guardado de un proyecto importado o devuelve el valor por defecto."""
+    proy = st.session_state.get("proyecto_cargado", {})
+    if isinstance(proy, dict) and clave in proy and proy[clave] is not None:
+        return proy[clave]
     return default
 
-def _id_widget(tipo, label, key=None):
-    base = str(key) if key else str(label)
-    return f"{tipo}::{base.strip()}"
+def obtener_df(clave, df_default):
+    """Obtiene un DataFrame guardado de un proyecto importado o devuelve el DataFrame por defecto."""
+    proy = st.session_state.get("proyecto_cargado", {})
+    if isinstance(proy, dict) and clave in proy:
+        val = proy[clave]
+        if isinstance(val, list):
+            return pd.DataFrame(val)
+        if isinstance(val, pd.DataFrame):
+            return val
+    return df_default
 
-def activar_persistencia_automatica():
-    """
-    Envuelve automáticamente los componentes de Streamlit (text_input, text_area,
-    checkbox, radio, data_editor) para que todas las pestañas de app-SEYEP-ESC
-    puedan Guardar e Importar su estado sin necesidad de modificar cada archivo en views/.
-    """
-    global _PATCH_APLICADO
-    if _PATCH_APLICADO:
-        return
+def serializar_objeto(obj):
+    if isinstance(obj, pd.DataFrame):
+        return obj.to_dict(orient="records")
+    if isinstance(obj, list):
+        nueva_lista = []
+        for item in obj:
+            if isinstance(item, dict):
+                nuevo_item = {}
+                for k, v in item.items():
+                    nuevo_item[k] = serializar_objeto(v)
+                nueva_lista.append(nuevo_item)
+            else:
+                nueva_lista.append(item)
+        return nueva_lista
+    return obj
 
-    def _wrapped_text_input(label, value="", *args, **kwargs):
-        ver = st.session_state.get("esc_ver_import", 0)
-        wid = _id_widget("text_input", label, kwargs.get("key"))
-        cargado = st.session_state.get("esc_widgets_cargados", {})
-        if wid in cargado and cargado[wid] is not None:
-            value = str(cargado[wid])
-        orig_key = kwargs.get("key", f"auto_ti_{abs(hash(wid))}")
-        kwargs["key"] = f"{orig_key}_v{ver}"
-        res = _ORIG_TEXT_INPUT(label, value=value, *args, **kwargs)
-        st.session_state.setdefault("esc_widgets_actuales", {})[wid] = res
-        return res
-
-    def _wrapped_text_area(label, value="", *args, **kwargs):
-        ver = st.session_state.get("esc_ver_import", 0)
-        wid = _id_widget("text_area", label, kwargs.get("key"))
-        cargado = st.session_state.get("esc_widgets_cargados", {})
-        if wid in cargado and cargado[wid] is not None:
-            value = str(cargado[wid])
-        orig_key = kwargs.get("key", f"auto_ta_{abs(hash(wid))}")
-        kwargs["key"] = f"{orig_key}_v{ver}"
-        res = _ORIG_TEXT_AREA(label, value=value, *args, **kwargs)
-        st.session_state.setdefault("esc_widgets_actuales", {})[wid] = res
-        return res
-
-    def _wrapped_checkbox(label, value=False, *args, **kwargs):
-        ver = st.session_state.get("esc_ver_import", 0)
-        wid = _id_widget("checkbox", label, kwargs.get("key"))
-        cargado = st.session_state.get("esc_widgets_cargados", {})
-        if wid in cargado and cargado[wid] is not None:
-            value = bool(cargado[wid])
-        orig_key = kwargs.get("key", f"auto_chk_{abs(hash(wid))}")
-        kwargs["key"] = f"{orig_key}_v{ver}"
-        res = _ORIG_CHECKBOX(label, value=value, *args, **kwargs)
-        st.session_state.setdefault("esc_widgets_actuales", {})[wid] = res
-        return res
-
-    def _wrapped_radio(label, options, index=0, *args, **kwargs):
-        ver = st.session_state.get("esc_ver_import", 0)
-        wid = _id_widget("radio", label, kwargs.get("key"))
-        cargado = st.session_state.get("esc_widgets_cargados", {})
-        lista_opts = list(options)
-        if wid in cargado and cargado[wid] in lista_opts:
-            index = lista_opts.index(cargado[wid])
-        orig_key = kwargs.get("key", f"auto_rad_{abs(hash(wid))}")
-        kwargs["key"] = f"{orig_key}_v{ver}"
-        res = _ORIG_RADIO(label, options, index=index, *args, **kwargs)
-        st.session_state.setdefault("esc_widgets_actuales", {})[wid] = res
-        return res
-
-    def _wrapped_data_editor(data, *args, **kwargs):
-        ver = st.session_state.get("esc_ver_import", 0)
-        wid = _id_widget("data_editor", kwargs.get("key", "tabla"))
-        cargado = st.session_state.get("esc_widgets_cargados", {})
-        if wid in cargado and isinstance(cargado[wid], list):
-            data = pd.DataFrame(cargado[wid])
-        orig_key = kwargs.get("key", f"auto_de_{abs(hash(wid))}")
-        kwargs["key"] = f"{orig_key}_v{ver}"
-        res = _ORIG_DATA_EDITOR(data, *args, **kwargs)
-        if isinstance(res, pd.DataFrame):
-            st.session_state.setdefault("esc_widgets_actuales", {})[wid] = res.to_dict(orient="records")
-        return res
-
-    st.text_input = _wrapped_text_input
-    st.text_area = _wrapped_text_area
-    st.checkbox = _wrapped_checkbox
-    st.radio = _wrapped_radio
-    st.data_editor = _wrapped_data_editor
-    _PATCH_APLICADO = True
-
-def _serializar_valor(v):
-    if isinstance(v, pd.DataFrame):
-        return v.to_dict(orient="records")
-    return v
-
-def exportar_proyecto_esc(params_totales):
-    """
-    Empaqueta en un archivo .json todos los campos, tablas editables,
-    archivos CSV de modulos_latex/ e imágenes PNG del proyecto ESC.
-    """
+def exportar_proyecto_json(params_totales):
+    """Empaqueta todas las variables, tablas, equipos adicionales del OR e imágenes en un JSON."""
     paquete = {
-        "formato": "SEYEP_ESC_V1",
-        "widgets": st.session_state.get("esc_widgets_actuales", {}),
-        "params": {k: _serializar_valor(v) for k, v in (params_totales or {}).items()},
-        "secciones_activas": st.session_state.get("secciones_activas", {}),
-        "subsecciones_activas": st.session_state.get("subsecciones_activas", {}),
-        "secciones_personalizadas": st.session_state.get("secciones_personalizadas", []),
-        "csv_files": {},
+        "formato": "SEYEP_EACP_V1",
+        "datos": {},
         "imagenes_b64": {}
     }
 
-    # Guardar todos los CSV generados en modulos_latex/ y raíz
-    patrones_csv = ["*.csv", "modulos_latex/*.csv", "modulos_latex/*/*.csv"]
-    for pat in patrones_csv:
-        for ruta_csv in glob.glob(pat):
-            ruta_norm = ruta_csv.replace("\\", "/")
-            try:
-                with open(ruta_csv, "r", encoding="utf-8", errors="ignore") as fc:
-                    paquete["csv_files"][ruta_norm] = fc.read()
-            except Exception:
-                pass
+    for k, v in params_totales.items():
+        paquete["datos"][k] = serializar_objeto(v)
 
-    # Guardar todas las imágenes PNG/JPG del estudio (excepto Encabezado y Piedepagina fijos)
-    for ext in ("*.png", "*.jpg", "*.jpeg"):
-        for ruta_img in glob.glob(ext):
-            nombre_base = os.path.basename(ruta_img)
-            if nombre_base.lower() in IMAGENES_EXCLUIDAS:
-                continue
+    paquete["datos"]["num_equipos_or_extra"] = st.session_state.get("num_equipos_or_extra", 0)
+    paquete["datos"]["num_cambios_or_extra"] = st.session_state.get("num_cambios_or_extra", 0)
+
+    for img_name in IMAGENES_PROYECTO:
+        if os.path.exists(img_name):
             try:
-                with open(ruta_img, "rb") as fi:
-                    paquete["imagenes_b64"][nombre_base] = base64.b64encode(fi.read()).decode("utf-8")
+                with open(img_name, "rb") as f_img:
+                    paquete["imagenes_b64"][img_name] = base64.b64encode(f_img.read()).decode("utf-8")
             except Exception:
                 pass
 
     return json.dumps(paquete, ensure_ascii=False, indent=2).encode("utf-8")
 
-def importar_proyecto_esc(uploaded_json_file):
-    """
-    Restaura todos los campos, tablas, archivos CSV e imágenes desde un archivo .json guardado.
-    """
+def importar_proyecto_json(uploaded_json_file):
+    """Restaura todas las variables, tablas e imágenes desde un archivo JSON de proyecto."""
     contenido = json.loads(uploaded_json_file.getvalue().decode("utf-8"))
+    datos = contenido.get("datos", contenido)
+    imagenes_b64 = contenido.get("imagenes_b64", {})
 
-    st.session_state["esc_widgets_cargados"] = contenido.get("widgets", {})
-    st.session_state["esc_params_cargados"] = contenido.get("params", {})
-    if "secciones_activas" in contenido:
-        st.session_state["secciones_activas"] = contenido.get("secciones_activas", {})
-    if "subsecciones_activas" in contenido:
-        st.session_state["subsecciones_activas"] = contenido.get("subsecciones_activas", {})
-    if "secciones_personalizadas" in contenido:
-        st.session_state["secciones_personalizadas"] = contenido.get("secciones_personalizadas", [])
+    st.session_state["proyecto_cargado"] = datos
+    st.session_state["num_equipos_or_extra"] = int(datos.get("num_equipos_or_extra", len(datos.get("equipos_or_extra", []))))
+    st.session_state["num_cambios_or_extra"] = int(datos.get("num_cambios_or_extra", len(datos.get("cambios_or_extra", []))))
 
-    # Restaurar archivos CSV en modulos_latex/
-    for ruta_norm, texto_csv in contenido.get("csv_files", {}).items():
-        carpeta = os.path.dirname(ruta_norm)
-        if carpeta:
-            os.makedirs(carpeta, exist_ok=True)
-        try:
-            with open(ruta_norm, "w", encoding="utf-8") as fc:
-                fc.write(texto_csv)
-        except Exception:
-            pass
-
-    # Restaurar imágenes PNG/JPG
-    for nombre_img, b64_str in contenido.get("imagenes_b64", {}).items():
-        if b64_str:
+    # Restaurar imágenes adjuntas en el archivo del proyecto
+    for img_name, b64_str in imagenes_b64.items():
+        if img_name in IMAGENES_PROYECTO and b64_str:
             try:
-                with open(os.path.basename(nombre_img), "wb") as fi:
-                    fi.write(base64.b64decode(b64_str))
+                with open(img_name, "wb") as f_out:
+                    f_out.write(base64.b64decode(b64_str))
             except Exception:
                 pass
 
-    st.session_state["esc_ver_import"] = st.session_state.get("esc_ver_import", 0) + 1
+    st.session_state["ver_import"] = st.session_state.get("ver_import", 0) + 1

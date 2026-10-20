@@ -1,12 +1,1 @@
-from . import tab_formato
-from . import tab_variables
-from . import tab_resumen
-from . import tab_cambios
-from . import tab_supuestos
-from . import tab_descripcion_equipos
-from . import tab_entrada_metodologia
-from . import tab_resultados_electricos
-from . import tab_protecciones
-from . import tab_conclusiones_anexos
-from . import tab_logo
-from . import tab_compilacion
+# Módulo de vistas para el Generador de Informes ANEXO EACP - SEYEP S.A.S.
