@@ -858,21 +858,9 @@ def generar_codigo_latex(params=None):
     mod_inv_1 = escapar_latex(inv_items[0].get("modelo", "Growat MAX 150KTL3-X2MV"))
     cant_inv_1 = escapar_latex(inv_items[0].get("cantidad", "6 Und."))
 
-    items_ref_list = []
-    items_mod_list = []
-    items_cant_list = []
-    for idx_i, inv in enumerate(inv_items):
-        pal = palabras_num[idx_i] if idx_i < len(palabras_num) else f"_{idx_i+1}"
-        items_ref_list.append(rf"	\item \refInversor{pal}")
-        items_mod_list.append(rf"	\item \Inversor{pal}")
-        items_cant_list.append(rf"	\item \cantidadInversor{pal}")
-    if not items_ref_list:
-        items_ref_list.append(r"	\item \refInversoruno")
-        items_mod_list.append(r"	\item \Inversoruno")
-        items_cant_list.append(r"	\item \cantidadInversoruno")
-    items_ref_inv = "\n".join(items_ref_list)
-    items_mod_inv = "\n".join(items_mod_list)
-    items_cant_inv = "\n".join(items_cant_list)
+    items_ref_inv = "\n".join([f"\\item {escapar_latex(x.get('ref', ''))}" for x in inv_items])
+    items_mod_inv = "\n".join([f"\\item {escapar_latex(x.get('modelo', ''))}" for x in inv_items])
+    items_cant_inv = "\n".join([f"\\item {escapar_latex(x.get('cantidad', ''))}" for x in inv_items])
     filas_inversores_tabla = "\n".join([
         f"        {escapar_latex(x.get('modelo', ''))} & {escapar_latex(x.get('ref', ''))} & {escapar_latex(x.get('cantidad', ''))} \\\\ \\hline"
         for x in inv_items
@@ -1564,20 +1552,17 @@ En la \cref{{tab:cargabilidadMax,tab:PUMax_conting}} se presenta los valores max
 \end{{itemize}}
 }}
 
-\def\refInversores{\begin{itemize}  
+\newcommand{{\refInversores}}{{\begin{{itemize}}
 {items_ref_inv}
-\end{itemize}
-}
+\end{{itemize}}}}
 
-\def\Inversores{\begin{itemize}  
+\newcommand{{\Inversores}}{{\begin{{itemize}}
 {items_mod_inv}
-\end{itemize}
-}
+\end{{itemize}}}}
 
-\def\cantidadInversores{\begin{itemize}  
+\newcommand{{\cantidadInversores}}{{\begin{{itemize}}
 {items_cant_inv}
-\end{itemize}
-}
+\end{{itemize}}}}
 
 \newcommand{{\CONCLUSIONFERFILESCARGA}}{{%
 {conclusion_perfiles_carga}
@@ -1771,59 +1756,55 @@ La información requerida para el modelamiento del área de influencia fue sumin
 {sec2_intro} \\
 %\newpage
 
-\begin{table}[h!]
+\begin{{table}}[h!]
     \centering
-    \caption{Coordenadas geográficas del Proyecto.}
-    \label{tab:coordenadas}
-    
-    \renewcommand{\arraystretch}{1.8} 
-    \begin{tabular}{|c|c|c|}
+    \caption{{Coordenadas geográficas del Proyecto.}}
+    \label{{tab:coordenadas}}
+    \renewcommand{{\arraystretch}}{{1.8}}
+    \begin{{tabular}}{{|c|c|c|}}
         \hline
-        \rowcolor{azulSeyep} 
-        \textbf{\textcolor{black}{Nombre}} & 
-        \textbf{\textcolor{black}{Latitud}} & 
-        \textbf{\textcolor{black}{Longitud}} \\ \hline
+        \rowcolor{{azulSeyep}}
+        \textbf{{\textcolor{{white}}{{Nombre}}}} &
+        \textbf{{\textcolor{{white}}{{Latitud}}}} &
+        \textbf{{\textcolor{{white}}{{Longitud}}}} \\ \hline
         \nombreProyecto\ & \Latitud\ & \Longitud\ \\ \hline
-    \end{tabular}
-\end{table}
+    \end{{tabular}}
+\end{{table}}
 \bigskip
 
-\begin{table}[h!]
+\begin{{table}}[h!]
     \centering
-    \caption{Descripción general del proyecto.}
-    \label{tab:descripcion_proyecto}
-
-    \resizebox{\textwidth}{!}{%
-        \renewcommand{\arraystretch}{1.5}
-        \begin{tabular}{|c|c|c|c|}
+    \caption{{Descripción general del proyecto.}}
+    \label{{tab:descripcion_proyecto}}
+    \resizebox{{\textwidth}}{{!}}{{%
+        \renewcommand{{\arraystretch}}{{1.5}}
+        \begin{{tabular}}{{|c|c|c|c|}}
             \hline
-            \rowcolor{azulSeyep}
-            \textbf{\textcolor{black}{ÍTEM}} & \multicolumn{3}{c|}{\textbf{\textcolor{black}{DESCRIPCIÓN}}} \\ \hline
-            Proyecto. & \multicolumn{3}{c|}{{sigla_proyecto} \nombreProyecto} \\ \hline
-            Vida Útil & \multicolumn{3}{c|}{{vida_util}} \\ \hline
-            Nodo y/o circuito de Conexión & \multicolumn{3}{c|}{\nodo\  \CTO{}} \\ \hline
-            Tramo de referencia de la red & \multicolumn{3}{c|}{21755652 CF-125} \\ \hline
-            Potencia. & \multicolumn{3}{c|}{\capacidadMW} \\ \hline
-            Tipo Fuente de Energía & \multicolumn{3}{c|}{{tipo_fuente}} \\ \hline
-
-            \multirow{3}{*}{Equipos.}
-                & {tipo_panel_etiqueta} \potenciaPanel{{}} & \referenciaPanel{{}} & \cantidadPanel{{}} \\ \cline{2-4}
-                & \begin{minipage}[t]{6.5cm}
+            \rowcolor{{azulSeyep}}
+            \textbf{{\textcolor{{white}}{{ÍTEM}}}} & \multicolumn{{3}}{{c|}}{{\textbf{{\textcolor{{white}}{{DESCRIPCIÓN}}}}}} \\ \hline
+            Proyecto. & \multicolumn{{3}}{{c|}}{{{sigla_proyecto} \nombreProyecto}} \\ \hline
+            Vida Útil & \multicolumn{{3}}{{c|}}{{{vida_util}}} \\ \hline
+            Nodo y/o circuito de Conexión & \multicolumn{{3}}{{c|}}{{\nodo\ / \CTO{{}}}} \\ \hline
+            Potencia. & \multicolumn{{3}}{{c|}}{{\capacidadMW}} \\ \hline
+            Tipo Fuente de Energía & \multicolumn{{3}}{{c|}}{{{tipo_fuente}}} \\ \hline
+            \multirow{{3}}{{*}}{{Equipos.}}
+                & {tipo_panel_etiqueta} \potenciaPanel{{}} & \referenciaPanel{{}} & \cantidadPanel{{}} \\ \cline{{2-4}}
+                & \begin{{minipage}}[t]{{6.5cm}}
                     \refInversores
-		\vspace{1pt}
-                  \end{minipage} 
-                & \begin{minipage}[t]{6.5cm}
+                    \vspace{{1pt}}
+                  \end{{minipage}}
+                & \begin{{minipage}}[t]{{6.5cm}}
                     \Inversores
-		\vspace{1pt}
-                  \end{minipage} 
-                & \begin{minipage}[t]{3.5cm}
+                    \vspace{{1pt}}
+                  \end{{minipage}}
+                & \begin{{minipage}}[t]{{3.5cm}}
                     \cantidadInversores
-		\vspace{1pt}
-                  \end{minipage} \\ \cline{2-4}
+                    \vspace{{1pt}}
+                  \end{{minipage}} \\ \cline{{2-4}}
                 & {prot_item} & {prot_desc} & {prot_cant} \\ \hline
-        \end{tabular}%
-    }
-\end{table}
+        \end{{tabular}}%
+    }}
+\end{{table}}
 
 \newpage
 Finalmente, para la contextualización general del proyecto se presenta la \cref{{fig:ubicacion}}, donde se resalta la ubicación de este.
@@ -2347,16 +2328,9 @@ def compilar_estudio_latex(params=None):
         )
 
     try:
-        cmd = [pdflatex_bin, "-interaction=nonstopmode", tex_filename]
-        # Primera pasada
-        subprocess.run(cmd, capture_output=True, text=True, timeout=90, shell=False)
-
-        # Segunda pasada para generar TOC, listas de tablas/figuras y referencias cruzadas
-        subprocess.run(cmd, capture_output=True, text=True, timeout=90, shell=False)
-
-        if os.path.exists(pdf_filename) and os.path.getsize(pdf_filename) > 0:
-            return True, pdf_filename
-        else:
+        cmd = [pdflatex_bin, "-interaction=nonstopmode", "-halt-on-error", tex_filename]
+        proceso1 = subprocess.run(cmd, capture_output=True, text=True, timeout=60, shell=(os.name == 'nt'))
+        if proceso1.returncode != 0:
             log_contenido = ""
             if os.path.exists("Estudio_Conexion.log"):
                 with open("Estudio_Conexion.log", "r", encoding="utf-8", errors="ignore") as log_file:
@@ -2366,14 +2340,20 @@ def compilar_estudio_latex(params=None):
             bloques_error = []
             for idx, line in enumerate(todas_lineas):
                 if line.startswith("!"):
-                    fragmento = "\n".join(todas_lineas[idx:idx + 6])
+                    fragmento = "\n".join(todas_lineas[idx:idx + 5])
                     bloques_error.append(fragmento)
 
-            detalle = "\n---\n".join(bloques_error[:4]) if bloques_error else "Error desconocido durante la ejecución de pdflatex."
+            detalle = "\n---\n".join(bloques_error[:3]) if bloques_error else "Error desconocido en pdflatex."
             return False, f"Fallo de compilación en LaTeX:\n{detalle}"
-    except subprocess.TimeoutExpired:
-        if os.path.exists(pdf_filename) and os.path.getsize(pdf_filename) > 0:
+
+        # Segunda pasada para generar TOC y referencias cruzadas
+        subprocess.run(cmd, capture_output=True, text=True, timeout=60, shell=(os.name == 'nt'))
+
+        if os.path.exists(pdf_filename):
             return True, pdf_filename
-        return False, "La compilación tardó demasiado y fue interrumpida (timeout de 90s)."
+        else:
+            return False, "No se encontró el PDF resultante tras la compilación."
+    except subprocess.TimeoutExpired:
+        return False, "La compilación tardó demasiado y fue interrumpida (timeout de 60s)."
     except Exception as e:
         return False, f"Error inesperado al ejecutar pdflatex: {str(e)}"
