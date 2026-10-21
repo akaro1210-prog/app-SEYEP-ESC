@@ -58,11 +58,11 @@ def render(config_vars, resumen_textos, df_control_cambios, texto_supuesto_activ
                             st.error(f"No se encontró el archivo PDF en la ruta: {resultado}")
                     except Exception as ex:
                         st.error(f"Error al leer el archivo PDF para descarga: {ex}")
-                else:
                     if "No se encontró" in resultado:
                         st.warning(resultado)
                     else:
-                        st.error(f"Error en la compilación: {resultado}")
+                        st.error("Error en la compilación:")
+                        st.code(resultado, language="text")
                     if os.path.exists("Estudio_Conexion.tex"):
                         with open("Estudio_Conexion.tex", "rb") as f_tex:
                             st.download_button(

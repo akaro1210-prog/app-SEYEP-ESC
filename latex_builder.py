@@ -747,7 +747,7 @@ def generar_codigo_latex(params=None):
         pass
 
     # 0. Determinación del régimen: Generación Distribuida (GD) vs Autogenerador
-    tipo_estudio_raw = str(buscar_param(params, ["tipo_estudio", "tipoEstudio", "regimen"], "GD"))
+    tipo_estudio_raw = str(buscar_param(params, ["tipo_estudio", "tipoEstudio", "regimen", "tipo_proyecto", "tipoProyecto"], "GD"))
     norma_cno = escapar_latex(buscar_param(params, ["normaCNO", "norma_cno"], "2233"))
     es_autogenerador = ("autogenerador" in tipo_estudio_raw.lower() or bool(params.get("es_autogenerador", False)))
 
@@ -910,7 +910,14 @@ def generar_codigo_latex(params=None):
         "Finalmente, estos estudios proporcionan una sólida base técnica para afirmar la viabilidad del proyecto, asegurando su integración segura y eficiente en la red eléctrica existente."
     )
 
-    texto_supuesto_activo = params.get("texto_supuesto_activo", "")
+    default_texto_supuestos = (
+        r"En la información suministrada por el OR no se definió el escenario de análisis (t+x), "
+        r"por lo tanto se tomó un valor de 5 años, que es un dato utilizado por otros OR para este tipo de análisis, "
+        r"de esta forma se tiene que el horizonte de análisis del proyecto es \YearInicial\ y (t+5) \YearFinal, "
+        r"los valores de tasa de crecimiento para escalar la demanda equivalente de la subestación se tomaron de los "
+        r"datos suministrados por la UPME, en la \cref{tab:UPME}\\"
+    )
+    texto_supuesto_activo = params.get("texto_supuesto_activo", default_texto_supuestos)
     usar_tabla_upme = params.get("usar_tabla_upme", True)
     df_supuestos_upme = params.get("df_supuestos_upme", None)
     archivo_or_path = params.get("archivo_or_path", None)
@@ -1026,23 +1033,18 @@ En la \cref{{fig:georeferencia}}, se presenta el diagrama eléctrico geoespacial
 
     csv_cargas_ini = incluir_csv_seguro(
         "col sep=semicolon, skip rows between index={500}{5000}",
-        f"Demandas consideradas en el circuito {year_inicial} - Calculada con la información entregada por el OR y la proyección de la UPME en la \\cref{{tab:UPME}}",
+        f"Demandas consideradas en el circuito {year_inicial} - Calculada con la información entregada por el OR y la proyección de la UPME en la Tabla~\\ref{{tab:UPME}}",
         f"tab:cargascto{year_inicial}",
         f"cargascto{year_inicial}.csv"
     )
     csv_cargas_fin = incluir_csv_seguro(
         "col sep=semicolon, skip rows between index={500}{5000}",
-        f"Demandas consideradas en el circuito {year_final} - Calculada con la información entregada por el OR y la proyección de la UPME en la \\cref{{tab:UPME}}",
+        f"Demandas consideradas en el circuito {year_final} - Calculada con la información entregada por el OR y la proyección de la UPME en la Tabla~\\ref{{tab:UPME}}",
         f"tab:cargascto{year_final}",
         f"cargascto{year_final}.csv"
     )
 
-    bloque_informacion_or = rf"""\cref{{tab:equivalentered,tab:cargascto{year_inicial},tab:cargascto{year_final}}}.
-\par
-{bloque_eq_red}
-{csv_cargas_ini}
-{csv_cargas_fin}
-"""
+    bloque_informacion_or = rf"\cref{{tab:equivalentered,tab:cargascto{year_inicial},tab:cargascto{year_final}}}"
 
     # 5. Datos Secciones 4, 5 y 6
     sec4_1_texto = params.get("sec4_1_texto", r"En la \cref{fig:Unifilar} se presenta el diagrama unifilar del circuito \CTO\ suministrado por el OR.")
@@ -1178,8 +1180,7 @@ En la \cref{{fig:georeferencia}}, se presenta el diagrama eléctrico geoespacial
     if incluir_contingencia:
         bloque_contingencia = rf"""
 \subsection{{\textit{{Análisis de contingencia}}}}
-{contingencia_p1}\\
-\\
+{contingencia_p1}\\[0.3cm]
 En la \cref{{tab:cargabilidadMax,tab:PUMax_conting}} se presenta los valores maximos alcanzados en el analisis de cargabilidad y perfiles de tensión.
 \begin{{table}}[h!]
     \centering
@@ -1469,16 +1470,15 @@ En la \cref{{tab:cargabilidadMax,tab:PUMax_conting}} se presenta los valores max
 
 \newcommand{{\supuestos}}{{%
 {texto_supuesto_activo}
-\\
 \newpage
 {bloque_tabla_supuestos}
 }}
 
 \newcommand{{\resumen}}{{%
 \begin{{itemize}}
-\item \textbf{{Flujo de carga:}} {resumen_flujo}\\
-\item \textbf{{Cortocircuito.}} {resumen_cortocircuito}\\
-\item \textbf{{Coordinación de protecciones:}} {resumen_protecciones}\\
+\item \textbf{{Flujo de carga:}} {resumen_flujo}
+\item \textbf{{Cortocircuito:}} {resumen_cortocircuito}
+\item \textbf{{Coordinación de protecciones:}} {resumen_protecciones}
 \end{{itemize}}
 }}
 
@@ -1661,8 +1661,7 @@ El presente documento tiene como objetivo principal analizar la viabilidad técn
 """ if incluir_subsec_1_1 else ""
 
     subsec_1_2_tex = rf"""\subsection{{\textit{{Supuestos y herramienta de modelación}}}}
-La información requerida para el modelamiento del área de influencia fue suministrada por el cliente y el OR comprendiendo el diagrama unifilar con sus respectivos nodos asociados al proyecto y sus respectivas cargas con el comportamiento en potencia activa y reactiva. El modelamiento de dicho diagrama unifilar se realizó en el software Digsilent Power Factory.\\
-\\
+La información requerida para el modelamiento del área de influencia fue suministrada por el cliente y el OR comprendiendo el diagrama unifilar con sus respectivos nodos asociados al proyecto y sus respectivas cargas con el comportamiento en potencia activa y reactiva. El modelamiento de dicho diagrama unifilar se realizó en el software Digsilent Power Factory.\\[0.3cm]
 \supuestos
 """ if incluir_subsec_1_2 else ""
 
@@ -1774,9 +1773,14 @@ En la \cref{{fig:fichapanel}}, se puede apreciar las características técnicas 
 """ if incluir_subsec_3_1 else ""
 
     subsec_3_2_tex = rf"""\subsection{{\textit{{Información OR}}}}
-{sec3_or_texto}\\
-\\
-Dado lo anterior, la información suministrada se puede apreciar en las \informacionOR
+{sec3_or_texto}\\[0.3cm]
+Dado lo anterior, la información suministrada se puede apreciar en las \informacionOR.
+
+{bloque_eq_red}
+
+{csv_cargas_ini}
+
+{csv_cargas_fin}
 """ if incluir_subsec_3_2 else ""
 
     bloque_s3 = rf"""% =====================================================================
@@ -1918,8 +1922,7 @@ En la \cref{{tab:TensionesPU}} se muestran los resultados de los perfiles de ten
     {img_tensiones_pu}
 \end{{table}}
 
-\CONCLUSIONFERFILESCARGA \\
-\\
+\CONCLUSIONFERFILESCARGA\\[0.3cm]
 Con el fin de evaluar el cambio en el perfil de tensión de los nodos de la zona de interés del proyecto {sigla_proyecto} \nombreProyecto, se presentan los valores p.u. de las tensiones del circuito la \cref{{fig:perfiltensionCTO}}
 \begin{{figure}}[h]
     \centering
