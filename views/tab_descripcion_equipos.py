@@ -46,19 +46,21 @@ def render(config_vars=None):
     )
     sec2_intro = st.text_area("Párrafo introductorio (Sección 2.1):", value=default_sec2_intro, height=110)
 
-    col_d1, col_d2, col_d3 = st.columns(3)
+    col_d1, col_d2, col_d3, col_d4 = st.columns(4)
     with col_d1:
         vida_util = st.text_input("Vida Útil (Tabla 2):", value="30 años.")
     with col_d2:
         tipo_fuente = st.text_input("Tipo Fuente de Energía:", value="Energía Solar")
     with col_d3:
         tipo_panel_etiqueta = st.text_input("Etiqueta tipo de panel:", value="Panel Solar Bifacial")
+    with col_d4:
+        tramo_red = st.text_input("Tramo referencia red:", value="21755652 CF-125")
 
     col_p1, col_p2, col_p3 = st.columns(3)
     with col_p1:
         prot_item = st.text_input("Ítem protección principal:", value="Protección – Interruptor")
     with col_p2:
-        prot_desc = st.text_input("Descripción interruptor:", value="Interruptor LSI 3 x 1360A")
+        prot_desc = st.text_input("Descripción interruptor:", value="Interruptor LSI 3 x 900A")
     with col_p3:
         prot_cant = st.text_input("Cantidad interruptor:", value="1 Und.")
 
@@ -186,6 +188,7 @@ def render(config_vars=None):
         "vida_util": vida_util,
         "tipo_fuente": tipo_fuente,
         "tipo_panel_etiqueta": tipo_panel_etiqueta,
+        "tramo_red": tramo_red,
         "prot_item": prot_item,
         "prot_desc": prot_desc,
         "prot_cant": prot_cant,

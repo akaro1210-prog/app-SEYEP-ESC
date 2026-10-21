@@ -275,11 +275,27 @@ def render():
         inv1_ref = obtener_val("refInversoruno", "Inversor 330 kW On-Grid.")
         inv1_mod = obtener_val("Inversoruno", "Huawei Sun2000 330KTL-H1")
         inv1_cant = obtener_val("cantidadInversoruno", "3 Und.")
-        st.session_state["inv_items_esc"] = [
+        lista_inicial = [
             {"ref": inv1_ref, "modelo": inv1_mod, "cantidad": inv1_cant}
         ]
+        # Recuperar segundo y tercer inversor si existen en el proyecto importado
+        inv2_ref = obtener_val("refInversordos", None)
+        if inv2_ref:
+            lista_inicial.append({
+                "ref": inv2_ref,
+                "modelo": obtener_val("Inversordos", "Huawei Sun2000 50KTL-M3"),
+                "cantidad": obtener_val("cantidadInversordos", "1 Und.")
+            })
+        inv3_ref = obtener_val("refInversortres", None)
+        if inv3_ref:
+            lista_inicial.append({
+                "ref": inv3_ref,
+                "modelo": obtener_val("Inversortres", "Huawei Sun2000 40KTL-M3"),
+                "cantidad": obtener_val("cantidadInversortres", "1 Und.")
+            })
         if "inv_items" in st.session_state and isinstance(st.session_state["inv_items"], list) and len(st.session_state["inv_items"]) > 0:
-            st.session_state["inv_items_esc"] = [dict(x) for x in st.session_state["inv_items"]]
+            lista_inicial = [dict(x) for x in st.session_state["inv_items"]]
+        st.session_state["inv_items_esc"] = lista_inicial
 
     palabras_num = ["uno", "dos", "tres", "cuatro", "cinco", "seis", "siete", "ocho", "nueve", "diez"]
     inversores_actuales = st.session_state.get("inv_items_esc", [])
@@ -395,8 +411,9 @@ def render():
 
     # Sincronizar en session_state para acceso universal en todas las pestañas
     for k, v in config_vars.items():
-        if k != "inv_items":
-            st.session_state[k] = v
+        st.session_state[k] = v
+    st.session_state["inv_items"] = nuevos_inv_items
+    st.session_state["inv_items_esc"] = nuevos_inv_items
 
     # --- Resumen y Verificación de las 31 Variables de LaTeX ---
     with st.expander("📋 Ver Lista Completa de las 31 Variables LaTeX del Proyecto (% ---------- Variables del proyecto ----------)", expanded=True):
