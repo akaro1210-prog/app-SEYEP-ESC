@@ -149,19 +149,57 @@ def render():
     st.markdown("### 6.1 Variables y Escenarios de Análisis")
     render_control_subseccion("subsec_6_1", "Variables y escenarios de análisis (Demanda y Generación)")
 
-    default_sec6_despacho = (
-        r"Para la demanda se consideró la información suminstrada por EPM y de acuerdo con el OR y el Consejo Nacional de Operación (CNO) "
-        r"con los lineamientos para estudios de conexión simplificado en el marco de la resolución CREG 174 de 2021, el estudio se realizó bajo los siguientes escenarios:"
+    tipo_escenarios = st.radio(
+        "Seleccione la modalidad de los escenarios de análisis:",
+        options=["Escenarios dados por el OR", "Escenarios según la norma"],
+        index=0 if st.session_state.get("tipo_escenarios_sec6", "Escenarios dados por el OR") == "Escenarios dados por el OR" else 1,
+        key="tipo_escenarios_sec6_radio",
+        horizontal=True,
+        help="Elige si deseas presentar los escenarios conforme a la información suministrada por el OR o según los criterios normativos de la Circular CREG 021 de 2022 con la tabla de posibilidades por variable."
     )
-    sec6_despacho = st.text_area("Descripción del despacho de demanda (Sección 6):", value=default_sec6_despacho, height=90)
+    st.session_state["tipo_escenarios_sec6"] = tipo_escenarios
 
-    default_sec6_gen_max = (
-        r"Para proyectos de generación fotovoltaico se presenta la generación máxima del proyecto a las 9:00 am, 12:00 pm y 3:00 pm, "
-        r"ya que la generación no es controlable y el único cambio presentado es la demanda, adicionalmente se considera el caso de demanda mínima "
-        r"(suministrada por el operador de red) para considerar las peores condiciones posibles donde la energía demandada por el circuito es la menor "
-        r"por lo que la disponibilidad de capacidad de transmisión es menor."
-    )
-    sec6_gen_max = st.text_area("Detalle de generación máxima y demanda coincidente (Sección 6):", value=default_sec6_gen_max, height=110)
+    if tipo_escenarios == "Escenarios según la norma":
+        st.info("📋 **Modalidad según la norma (Circular CREG 021 de 2022):** Se presentarán las tres variables (Año, Despacho de demanda y Despacho en el generador) junto con la tabla de posibilidades (\\label{tab:posibilidades}) y la referencia cruzada a la Curva de Consumo y Generación (\\cref{fig:consumoygeneracion}).")
+        c_h1, c_h2, c_h3 = st.columns(3)
+        with c_h1:
+            cp_hora = st.text_input("Hora Carga Pura (\\CP):", value=st.session_state.get("CP", "23:00"), key="sec6_cp_hora")
+            st.session_state["CP"] = cp_hora
+        with c_h2:
+            dmi_hora = st.text_input("Hora Demanda Mínima (\\Dmi):", value=st.session_state.get("Dmi", "11:00"), key="sec6_dmi_hora")
+            st.session_state["Dmi"] = dmi_hora
+        with c_h3:
+            dmx_hora = st.text_input("Hora Demanda Máxima (\\DMx):", value=st.session_state.get("DMx", "15:00"), key="sec6_dmx_hora")
+            st.session_state["DMx"] = dmx_hora
+
+        with st.expander("✏️ Personalizar texto introductorio de Sección 6 (Norma)", expanded=False):
+            sec6_norma_texto = st.text_area(
+                "Texto introductorio de variables normativas:",
+                value=st.session_state.get("sec6_norma_texto", r"Para clasificar cada uno de los resultados entregados en este estudio, se seleccionaron tres variables que describen cada uno de los escenarios de análisis. Estas variables son:"),
+                height=70,
+                key="sec6_norma_txt_area"
+            )
+        sec6_despacho = ""
+        sec6_gen_max = ""
+    else:
+        st.info("🏢 **Modalidad dada por el OR:** Se incluirán los escenarios con la información suministrada por el Operador de Red.")
+        default_sec6_despacho = (
+            r"Para la demanda se consideró la información suminstrada por EPM y de acuerdo con el OR y el Consejo Nacional de Operación (CNO) "
+            r"con los lineamientos para estudios de conexión simplificado en el marco de la resolución CREG 174 de 2021, el estudio se realizó bajo los siguientes escenarios:"
+        )
+        sec6_despacho = st.text_area("Descripción del despacho de demanda (Sección 6):", value=st.session_state.get("sec6_despacho", default_sec6_despacho), height=90, key="sec6_desp_area")
+
+        default_sec6_gen_max = (
+            r"Para proyectos de generación fotovoltaico se presenta la generación máxima del proyecto a las 9:00 am, 12:00 pm y 3:00 pm, "
+            r"ya que la generación no es controlable y el único cambio presentado es la demanda, adicionalmente se considera el caso de demanda mínima "
+            r"(suministrada por el operador de red) para considerar las peores condiciones posibles donde la energía demandada por el circuito es la menor "
+            r"por lo que la disponibilidad de capacidad de transmisión es menor."
+        )
+        sec6_gen_max = st.text_area("Detalle de generación máxima y demanda coincidente (Sección 6):", value=st.session_state.get("sec6_gen_max", default_sec6_gen_max), height=110, key="sec6_genmax_area")
+        sec6_norma_texto = ""
+        cp_hora = st.session_state.get("CP", "23:00")
+        dmi_hora = st.session_state.get("Dmi", "11:00")
+        dmx_hora = st.session_state.get("DMx", "15:00")
 
     # Botón para agregar secciones adicionales en Sección 6
     render_boton_agregar_seccion("sec_6", "Sección 6 (Escenarios de Análisis)")
@@ -177,6 +215,12 @@ def render():
         "sec5_intro": sec5_intro,
         "sec5_1_texto": sec5_1_texto,
         "sec5_2_texto": sec5_2_texto,
+        "tipo_escenarios_sec6": tipo_escenarios,
+        "escenarios_segun_norma": (tipo_escenarios == "Escenarios según la norma"),
+        "CP": cp_hora,
+        "Dmi": dmi_hora,
+        "DMx": dmx_hora,
+        "sec6_norma_texto": sec6_norma_texto,
         "sec6_despacho": sec6_despacho,
         "sec6_gen_max": sec6_gen_max
     }

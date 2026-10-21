@@ -810,9 +810,9 @@ def generar_codigo_latex(params=None):
     potencia_panel = escapar_latex(buscar_param(params, ["potenciaPanel", "potencia_panel"], "625 Wp"))
     cantidad_panel = escapar_latex(buscar_param(params, ["cantidadPanel", "cantidad_panel"], "1760"))
     ubicacion = escapar_latex(buscar_param(params, ["ubicacion", "Ubicacion"], "En predio del hotel Arboreo, Doradal, Antioquia"))
-    cp_hora = escapar_latex(buscar_param(params, ["CP", "cp", "hora_cp"], "------"))
-    dmi_hora = escapar_latex(buscar_param(params, ["Dmi", "dmi", "hora_dmi"], "------"))
-    dmx_hora = escapar_latex(buscar_param(params, ["DMx", "dmx", "hora_dmx"], "------"))
+    cp_hora = escapar_latex(buscar_param(params, ["CP", "cp", "hora_cp"], "23:00"))
+    dmi_hora = escapar_latex(buscar_param(params, ["Dmi", "dmi", "hora_dmi"], "11:00"))
+    dmx_hora = escapar_latex(buscar_param(params, ["DMx", "dmx", "hora_dmx"], "15:00"))
     escenario_max_perd = escapar_latex(buscar_param(params, ["escenariomaxPerdidas", "escenario_max_perdidas"], "----"))
     perdidas_maximas = escapar_latex(buscar_param(params, ["perdidasmaximas", "perdidas_maximas"], "----- kW"))
     generacion_aprobada = escapar_latex(buscar_param(params, ["generacionaprobada", "generacion_aprobada"], "900kW"))
@@ -1121,15 +1121,74 @@ En la \cref{{fig:georeferencia}}, se presenta el diagrama eléctrico geoespacial
     )
     sec5_2_texto = params.get("sec5_2_texto", default_sec5_2)
 
-    sec6_despacho = params.get(
-        "sec6_despacho",
-        r"Para la demanda se consideró la información suminstrada por EPM y de acuerdo con el OR y el Consejo Nacional de Operación (CNO) con los lineamientos para estudios de conexión simplificado en el marco de la resolución CREG 174 de 2021, el estudio se realizó bajo los siguientes escenarios:"
-    )
-    sec6_gen_max = params.get(
-        "sec6_gen_max",
-        r"Para proyectos de generación fotovoltaico se presenta la generación máxima del proyecto a las 9:00 am, 12:00 pm y 3:00 pm, ya que la generación no es controlable y el único cambio presentado es la demanda, adicionalmente se considera el caso de demanda mínima (suministrada por el operador de red) para considerar las peores condiciones posibles donde la energía demandada por el circuito es la menor por lo que la disponibilidad de capacidad de transmisión es menor."
-    )
-    default_sec6_contenido = rf"""Para clasificar cada uno de los resultados entregados en este estudio, se seleccionaron tres variables que describen cada uno de los escenarios de análisis. Estas variables son: \begin{{itemize}}
+    tipo_escenarios_sec6 = params.get("tipo_escenarios_sec6", "Escenarios dados por el OR")
+    es_escenarios_norma = ("norma" in str(tipo_escenarios_sec6).lower() or params.get("escenarios_segun_norma", False))
+
+    if es_escenarios_norma:
+        intro_norma = params.get(
+            "sec6_norma_texto",
+            r"Para clasificar cada uno de los resultados entregados en este estudio, se seleccionaron tres variables que describen cada uno de los escenarios de análisis. Estas variables son:"
+        )
+        default_sec6_contenido = rf"""{intro_norma} 
+\begin{{itemize}}  
+     \item Año
+	\begin{{itemize}}  
+    		 \item \textbf{{\YearInicial}}
+		\item \textbf{{\YearFinal}}
+	\end{{itemize}}
+     \item Despacho de demanda
+	\begin{{itemize}}  
+    		 \item \textbf{{Demanda de Carga Pura, esto equivale a la hora \CP}}
+		\item \textbf{{Demanda Mínima - Dmi, esto equivale a la hora \Dmi}}
+		\item \textbf{{Demanda Máxima - DMx, esto equivale a la hora \DMx}}
+	\end{{itemize}}
+     \item Despacho en el generador del proyecto
+	\begin{{itemize}}  
+    		 \item \textbf{{Despacho con generación del proyecto - GCP}}
+		\item \textbf{{Despacho sin generación del proyecto - GSP}}
+	\end{{itemize}}
+\end{{itemize}}
+
+En la \cref{{tab:posibilidades}}, se presentan las combinaciones de estas variables presentes en este estudio teniendo en cuenta la \cref{{fig:consumoygeneracion}}
+
+\begin{{table}}[htbp]
+    \centering
+    \renewcommand{{\arraystretch}}{{2}}
+    \caption{{Posibilidades por variable.}} 
+   \label{{tab:posibilidades}}
+    \footnotesize
+    \begin{{tabular}}{{|c|c|c|l|}}
+        \hline
+        \rowcolor{{azulSeyep}} 
+        \textbf{{\textcolor{{black}}{{Año}}}} & 
+        \textbf{{\textcolor{{black}}{{Demanda}}}} & 
+        \textbf{{\textcolor{{black}}{{Generación}}}} & 
+        \textbf{{\textcolor{{black}}{{Escenarios Circular CREG 021 de 2022}}}} \\ \hline
+        
+        % --- Bloque 2026 ---
+        \multirow{{4}}{{*}}{{\YearInicial}} & \multirow{{2}}{{*}}{{DMi}} & GCP & Momento de máxima diferencia \\ \cline{{3-4}}
+                              &                      & GSP & \centering - \arraybackslash \\ \cline{{2-4}}
+                              & \multirow{{2}}{{*}}{{DMx}} & GCP & Máxima demanda -- máxima generación \\ \cline{{3-4}}
+                              &                      & GSP & Carga Pura \\ \hline
+        
+        % --- Bloque 2028 ---
+        \multirow{{4}}{{*}}{{\YearFinal}} & \multirow{{2}}{{*}}{{DMi}} & GCP & Momento de máxima diferencia \\ \cline{{3-4}}
+                              &                      & GSP & \centering - \arraybackslash \\ \cline{{2-4}}
+                              & \multirow{{2}}{{*}}{{DMx}} & GCP & Máxima demanda -- máxima generación \\ \cline{{3-4}}
+                              &                      & GSP & Carga pura \\ \hline
+    \end{{tabular}}
+\end{{table}}"""
+        sec6_contenido = params.get("sec6_contenido_norma", params.get("sec6_contenido", default_sec6_contenido))
+    else:
+        sec6_despacho = params.get(
+            "sec6_despacho",
+            r"Para la demanda se consideró la información suminstrada por EPM y de acuerdo con el OR y el Consejo Nacional de Operación (CNO) con los lineamientos para estudios de conexión simplificado en el marco de la resolución CREG 174 de 2021, el estudio se realizó bajo los siguientes escenarios:"
+        )
+        sec6_gen_max = params.get(
+            "sec6_gen_max",
+            r"Para proyectos de generación fotovoltaico se presenta la generación máxima del proyecto a las 9:00 am, 12:00 pm y 3:00 pm, ya que la generación no es controlable y el único cambio presentado es la demanda, adicionalmente se considera el caso de demanda mínima (suministrada por el operador de red) para considerar las peores condiciones posibles donde la energía demandada por el circuito es la menor por lo que la disponibilidad de capacidad de transmisión es menor."
+        )
+        default_sec6_contenido = rf"""Para clasificar cada uno de los resultados entregados en este estudio, se seleccionaron tres variables que describen cada uno de los escenarios de análisis. Estas variables son: \begin{{itemize}}
     \item Año
 	\begin{{itemize}}
       \item \textbf{{\YearInicial}}
@@ -1143,7 +1202,7 @@ En la \cref{{fig:georeferencia}}, se presenta el diagrama eléctrico geoespacial
            \end{{itemize}}
    \end{{itemize}}
 \end{{itemize}}"""
-    sec6_contenido = params.get("sec6_contenido", default_sec6_contenido)
+        sec6_contenido = params.get("sec6_contenido_or", params.get("sec6_contenido", default_sec6_contenido))
 
     # 6. Datos Sección 7 (Resultados Eléctricos)
     img_conv_flujos = incluir_imagen_segura("convencionesflujos.png", "max width=0.6\\linewidth, max height=0.30\\textheight, keepaspectratio")
