@@ -1,4 +1,5 @@
 import os
+import re
 import subprocess
 from datetime import datetime
 import pandas as pd
@@ -85,8 +86,16 @@ def incluir_csv_seguro(opciones, caption, label, nombre_csv):
     para que todas las referencias \\cref{label} compilen sin errores.
     """
     ruta = str(nombre_csv).strip().replace("\\", "/")
-    caption_protegido = re.sub(r"(?<!\\protect)\\ref\{", r"\\protect\\ref{", caption)
-    caption_corto = re.sub(r"\\(?:cref|ref)\{[^}]*\}", "", caption).replace(" - Calculada con la información entregada por el OR y la proyección de la UPME en la Tabla~", "").strip()
+    caption_protegido = str(caption)
+    if r"\ref{" in caption_protegido and r"\protect\ref{" not in caption_protegido:
+        caption_protegido = caption_protegido.replace(r"\ref{", r"\protect\ref{")
+    
+    caption_corto = str(caption)
+    if " - Calculada con" in caption_corto:
+        caption_corto = caption_corto.split(" - Calculada con")[0].strip()
+    elif r"\ref{" in caption_corto:
+        caption_corto = caption_corto.replace(r"\ref{tab:UPME}", "").strip()
+
     if os.path.exists(ruta):
         return f"\\CSVTablaAuto[{opciones}]\n{{{caption_protegido}}}\n{{{label}}}\n{{{ruta}}}"
     nombre_limpio = escapar_latex(os.path.basename(ruta))
