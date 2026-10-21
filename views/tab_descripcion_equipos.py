@@ -62,37 +62,33 @@ def render(config_vars=None):
     with col_p3:
         prot_cant = st.text_input("Cantidad interruptor:", value="1 Und.")
 
-    st.markdown("#### Configuración de Inversores del Proyecto")
-    inversores_en_variables = st.session_state.get("inv_items_esc") or st.session_state.get("inv_items")
-    inv_items = []
-    if inversores_en_variables and isinstance(inversores_en_variables, list) and len(inversores_en_variables) > 0:
-        st.caption("Sincronizado con los inversores configurados en la pestaña **Variables**:")
-        for i, itm in enumerate(inversores_en_variables):
-            c1, c2, c3 = st.columns(3)
-            with c1:
-                ref_i = st.text_input(f"Referencia Inversor {i+1}:", value=itm.get("ref", f"Inversor {i+1}"), key=f"ref_inv_{i}")
-            with c2:
-                mod_i = st.text_input(f"Modelo Inversor {i+1}:", value=itm.get("modelo", f"Modelo {i+1}"), key=f"mod_inv_{i}")
-            with c3:
-                cant_i = st.text_input(f"Cantidad Inversor {i+1}:", value=itm.get("cantidad", "1 Und."), key=f"cant_inv_{i}")
-            inv_items.append({"ref": ref_i, "modelo": mod_i, "cantidad": cant_i})
-    else:
-        num_inversores = st.selectbox("Cantidad de referencias de inversores en el proyecto:", [1, 2, 3, 4, 5], index=0)
-        defaults_inv = [
-            ("Inversor 150 kW On-Grid.", "Growat MAX 150KTL3-X2MV", "6 Und."),
-            ("Inversor 50 kW On-Grid.", "Huawei Sun2000 50KTL-M3", "1 Und."),
-            ("Inversor 40 kW On-Grid.", "Huawei Sun2000 40KTL-M3", "1 Und.")
-        ]
-        for i in range(num_inversores):
-            c1, c2, c3 = st.columns(3)
-            def_val = defaults_inv[i] if i < len(defaults_inv) else (f"Inversor {i+1}", f"Modelo {i+1}", "1 Und.")
-            with c1:
-                ref_i = st.text_input(f"Referencia Inversor {i+1}:", value=def_val[0], key=f"ref_inv_{i}")
-            with c2:
-                mod_i = st.text_input(f"Modelo Inversor {i+1}:", value=def_val[1], key=f"mod_inv_{i}")
-            with c3:
-                cant_i = st.text_input(f"Cantidad Inversor {i+1}:", value=def_val[2], key=f"cant_inv_{i}")
-            inv_items.append({"ref": ref_i, "modelo": mod_i, "cantidad": cant_i})
+    st.markdown("#### ☀️ Inversores Fotovoltaicos del Proyecto (Solo Visualización)")
+    st.info(
+        "🔒 **Modo Solo Lectura (Sincronizado con la pestaña 2. Variables):** "
+        "Los inversores se configuran, agregan o modifican exclusivamente en la pestaña **2. Variables**. "
+        "En esta sección se visualizan de manera informativa y se insertan automáticamente en la Tabla 2 y especificaciones del informe."
+    )
+    inversores_en_variables = None
+    if config_vars and isinstance(config_vars, dict) and "inv_items" in config_vars:
+        inversores_en_variables = config_vars.get("inv_items")
+    if not inversores_en_variables:
+        inversores_en_variables = st.session_state.get("inv_items_esc") or st.session_state.get("inv_items", [])
+    if not inversores_en_variables or not isinstance(inversores_en_variables, list):
+        inversores_en_variables = [{"ref": "Inversor 330 kW On-Grid.", "modelo": "Huawei Sun2000 330KTL-H1", "cantidad": "3 Und."}]
+
+    # Vista limpia de solo lectura
+    filas_inv_vista = []
+    for idx, itm in enumerate(inversores_en_variables):
+        filas_inv_vista.append({
+            "No.": idx + 1,
+            "Referencia (\\refInversor)": itm.get("ref", ""),
+            "Modelo (\\Inversor)": itm.get("modelo", ""),
+            "Cantidad (\\cantidadInversor)": itm.get("cantidad", "")
+        })
+    st.table(filas_inv_vista)
+    st.caption("ℹ️ Para modificar las referencias, modelos o cantidades, dirígete a la pestaña **2. Variables**.")
+
+    inv_items = [dict(x) for x in inversores_en_variables]
 
     default_sec2_cierre = (
         r"Finalmente, para la contextualización general del proyecto se presenta la \cref{fig:ubicacion}, donde se resalta la ubicación de este."

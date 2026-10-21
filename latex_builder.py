@@ -85,13 +85,15 @@ def incluir_csv_seguro(opciones, caption, label, nombre_csv):
     para que todas las referencias \\cref{label} compilen sin errores.
     """
     ruta = str(nombre_csv).strip().replace("\\", "/")
+    caption_protegido = re.sub(r"(?<!\\protect)\\ref\{", r"\\protect\\ref{", caption)
+    caption_corto = re.sub(r"\\(?:cref|ref)\{[^}]*\}", "", caption).replace(" - Calculada con la información entregada por el OR y la proyección de la UPME en la Tabla~", "").strip()
     if os.path.exists(ruta):
-        return f"\\CSVTablaAuto[{opciones}]\n{{{caption}}}\n{{{label}}}\n{{{ruta}}}"
+        return f"\\CSVTablaAuto[{opciones}]\n{{{caption_protegido}}}\n{{{label}}}\n{{{ruta}}}"
     nombre_limpio = escapar_latex(os.path.basename(ruta))
     return f"""
 \\begin{{table}}[H]
 \\centering
-\\caption{{{caption}}}
+\\caption[{caption_corto}]{{{caption_protegido}}}
 \\label{{{label}}}
 \\vspace{{0.2cm}}
 \\fbox{{\\parbox{{0.85\\textwidth}}{{\\centering\\vspace{{0.35cm}}
@@ -795,31 +797,31 @@ def generar_codigo_latex(params=None):
                 if ("entrega" in nk and nk != "fechaentrada") or ("mes" in nk and "year" in nk) or ("mes" in nk and "anio" in nk):
                     mes_entrega_raw = v
                     break
-    mes_entrega = escapar_latex(mes_entrega_raw if mes_entrega_raw else "Septiembre, 2026")
+    mes_entrega = escapar_latex(mes_entrega_raw if mes_entrega_raw else "Julio, 2026")
 
-    latitud = escapar_latex(buscar_param(params, ["Latitud", "latitud"], '5°53\'49.8"N'))
-    longitud = escapar_latex(buscar_param(params, ["Longitud", "longitud"], '74°45\'12.9"W'))
+    latitud = escapar_latex(buscar_param(params, ["Latitud", "latitud"], "8.809128°"))
+    longitud = escapar_latex(buscar_param(params, ["Longitud", "longitud"], "-75.801456°"))
     year_inicial = escapar_latex(buscar_param(params, ["YearInicial", "year_inicial", "anio_inicial"], "2027"))
-    year_final = escapar_latex(buscar_param(params, ["YearFinal", "year_final", "anio_final"], "2032"))
-    cto = escapar_latex(buscar_param(params, ["CTO", "cto", "circuito"], "211-11"))
-    ssee = escapar_latex(buscar_param(params, ["SSEE", "ssee", "subestacion"], "Doradal_13.2"))
-    nt = escapar_latex(buscar_param(params, ["NT", "nt", "nivel_tension", "nivelTension"], "13.2kV"))
-    nodo = escapar_latex(buscar_param(params, ["nodo", "nodo_conexion", "nodoConexion"], "906750"))
-    elemento_proteccion = escapar_latex(buscar_param(params, ["elementoProteccion", "elemento_proteccion"], "211-11"))
-    referencia_panel = escapar_latex(buscar_param(params, ["referenciaPanel", "referencia_panel"], "JAM66D45 625 LB"))
-    potencia_panel = escapar_latex(buscar_param(params, ["potenciaPanel", "potencia_panel"], "625 Wp"))
-    cantidad_panel = escapar_latex(buscar_param(params, ["cantidadPanel", "cantidad_panel"], "1760"))
-    ubicacion = escapar_latex(buscar_param(params, ["ubicacion", "Ubicacion"], "En predio del hotel Arboreo, Doradal, Antioquia"))
+    year_final = escapar_latex(buscar_param(params, ["YearFinal", "year_final", "anio_final"], "2030"))
+    cto = escapar_latex(buscar_param(params, ["CTO", "cto", "circuito"], "Nueva Montería 2"))
+    ssee = escapar_latex(buscar_param(params, ["SSEE", "ssee", "subestacion"], "Nueva Montería"))
+    nt = escapar_latex(buscar_param(params, ["NT", "nt", "nivel_tension", "nivelTension"], "13.8kV"))
+    nodo = escapar_latex(buscar_param(params, ["nodo", "nodo_conexion", "nodoConexion"], "1051545"))
+    elemento_proteccion = escapar_latex(buscar_param(params, ["elementoProteccion", "elemento_proteccion"], "R3014"))
+    referencia_panel = escapar_latex(buscar_param(params, ["referenciaPanel", "referencia_panel"], "LR8-66HGD 595~625M"))
+    potencia_panel = escapar_latex(buscar_param(params, ["potenciaPanel", "potencia_panel"], "615 Wp"))
+    cantidad_panel = escapar_latex(buscar_param(params, ["cantidadPanel", "cantidad_panel"], "2088"))
+    ubicacion = escapar_latex(buscar_param(params, ["ubicacion", "Ubicacion"], "Montería, entre los corregimientos Aguas negras y Los Venados"))
     cp_hora = escapar_latex(buscar_param(params, ["CP", "cp", "hora_cp"], "23:00"))
     dmi_hora = escapar_latex(buscar_param(params, ["Dmi", "dmi", "hora_dmi"], "11:00"))
     dmx_hora = escapar_latex(buscar_param(params, ["DMx", "dmx", "hora_dmx"], "15:00"))
-    escenario_max_perd = escapar_latex(buscar_param(params, ["escenariomaxPerdidas", "escenario_max_perdidas"], "----"))
-    perdidas_maximas = escapar_latex(buscar_param(params, ["perdidasmaximas", "perdidas_maximas"], "----- kW"))
-    generacion_aprobada = escapar_latex(buscar_param(params, ["generacionaprobada", "generacion_aprobada"], "900kW"))
-    potencia_minima = escapar_latex(buscar_param(params, ["potenciaminima", "potencia_minima"], "90 kW"))
-    reco_cto = escapar_latex(buscar_param(params, ["recoCTO", "reco_cto"], "211-11"))
+    escenario_max_perd = escapar_latex(buscar_param(params, ["escenariomaxPerdidas", "escenario_max_perdidas"], "CP del 2030"))
+    perdidas_maximas = escapar_latex(buscar_param(params, ["perdidasmaximas", "perdidas_maximas"], "410 kW"))
+    generacion_aprobada = escapar_latex(buscar_param(params, ["generacionaprobada", "generacion_aprobada"], "4950kW"))
+    potencia_minima = escapar_latex(buscar_param(params, ["potenciaminima", "potencia_minima"], "3400kW"))
+    reco_cto = escapar_latex(buscar_param(params, ["recoCTO", "reco_cto"], "R-3014"))
     tipo_proteccion = escapar_latex(buscar_param(params, ["tipoproteccion", "tipo_proteccion"], "Reconectador"))
-    reco_cabecera = escapar_latex(buscar_param(params, ["recocabecera", "reco_cabecera"], " "))
+    reco_cabecera = escapar_latex(buscar_param(params, ["recocabecera", "reco_cabecera"], "Nueva Monteria 2"))
 
     palabras_num = ["uno", "dos", "tres", "cuatro", "cinco", "seis", "siete", "ocho", "nueve", "diez"]
 
@@ -827,9 +829,9 @@ def generar_codigo_latex(params=None):
     inv_items = params.get("inv_items", None)
     if not inv_items or not isinstance(inv_items, list):
         inv_items = [
-            {"ref": params.get("refInversoruno", "Inversor 150 kW On-Grid."),
-             "modelo": params.get("Inversoruno", "Growat MAX 150KTL3-X2MV"),
-             "cantidad": params.get("cantidadInversoruno", "6 Und.")}
+            {"ref": params.get("refInversoruno", "Inversor 330 kW On-Grid."),
+             "modelo": params.get("Inversoruno", "Huawei Sun2000 330KTL-H1"),
+             "cantidad": params.get("cantidadInversoruno", "3 Und.")}
         ]
         for idx_chk in range(1, len(palabras_num)):
             pal_chk = palabras_num[idx_chk]
@@ -1929,7 +1931,13 @@ Dado lo anterior, la información suministrada se puede apreciar en las \informa
     bloque_s5 += generar_latex_secciones_personalizadas("sec_5", params, es_autogenerador)
 
     # --- SECCIÓN 6: ESCENARIOS DE ANÁLISIS ---
-    subsec_6_1_tex = rf"""{sec6_contenido}
+    sec6_contenido_limpio = sec6_contenido.strip()
+    if sec6_contenido_limpio.startswith(r"\section{DESCRIPCIÓN DE LOS ESCENARIOS DE ANÁLISIS}"):
+        sec6_contenido_cuerpo = sec6_contenido_limpio[len(r"\section{DESCRIPCIÓN DE LOS ESCENARIOS DE ANÁLISIS}"):].strip()
+    else:
+        sec6_contenido_cuerpo = sec6_contenido_limpio
+
+    subsec_6_1_tex = rf"""{sec6_contenido_cuerpo}
 \newpage
 """ if incluir_subsec_6_1 else ""
 
